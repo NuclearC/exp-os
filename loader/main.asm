@@ -60,8 +60,19 @@ ldr_entry:
     mov eax, 0 ; the row
     mov ebx, 0 ; the column
     call v_print
+    
+    sub esp, 512
+    mov edi, esp
+    mov al, 2 
+    call io_read_sector
+    
     mov esi, test_str2
     mov eax, 1
+    call v_print   
+ 
+    mov esi, esp
+    add esi, 4
+    mov eax, 2
     call v_print
     jmp $    
 

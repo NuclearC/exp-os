@@ -6,7 +6,7 @@
 int KeMain(void) {
 
 
-    return;
+    return 0;
 }
 
 

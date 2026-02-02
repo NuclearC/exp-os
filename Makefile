@@ -4,11 +4,11 @@
 
 ASM := nasm
 ASMFLAGS := -f bin -i ./util/
-ASMFLAGSL := -f coff
+ASMFLAGSL := -f coff -i ./util/
 LINK := ld
-LINKFLAGS := -Ttext 0x1000 --oformat binary 
+LINKFLAGS := -T ./kernel/linker.ld -m elf_i386 --oformat binary 
 CC := gcc
-CCFLAGS := -ffreestanding -c
+CCFLAGS := -ffreestanding -nostdlib -m32 -fno-pie -c
 
 # The final boot image
 TARGET := bootimage
@@ -26,20 +26,29 @@ LOADER_DIR := ./loader/
 LOADER_SOURCES := $(LOADER_DIR)main.asm
 LOADER_OBJECTS := $(patsubst $(LOADER_DIR)%.asm,$(OBJECT_DIR)%.o,$(LOADER_SOURCES))
 LOADER_OBJECTS := $(patsubst $(LOADER_DIR)%.c,$(OBJECT_DIR)%.o,$(LOADER_OBJECTS))
-$(info  $(LOADER_OBJECTS))
 LOADER_IMAGE := $(OUTPUT_DIR)loader.bin
 
-OBJECTS += $(LOADER_OBJECTS)
-IMAGES += $(BOOT_IMAGE) $(LOADER_IMAGE)
+# the OS kernel files
+KERNEL_DIR := ./kernel/
+KERNEL_SOURCES := $(wildcard $(KERNEL_DIR)*.c)
+KERNEL_SOURCES += $(wildcard $(KERNEL_DIR)*.asm)
+KERNEL_OBJECTS := $(patsubst $(KERNEL_DIR)%.c,$(OBJECT_DIR)kernel/%.o,$(KERNEL_SOURCES))
+KERNEL_OBJECTS := $(patsubst $(KERNEL_DIR)%.asm,$(OBJECT_DIR)kernel/%.o,$(KERNEL_OBJECTS))
+KERNEL_IMAGE := $(OUTPUT_DIR)kernel.bin
+
+OBJECTS += $(LOADER_OBJECTS) $(KERNEL_OBJECTS) 
+IMAGES += $(BOOT_IMAGE) $(LOADER_IMAGE) $(KERNEL_IMAGE)
 
 all: $(TARGET)
 
 clean:
 	rm $(IMAGES) $(OBJECTS) $(OUTPUT_FILE)
 
+# bootloader rules
 $(OUTPUT_DIR)%.bin: $(BOOT_DIR)%.asm
 	$(ASM) $(ASMFLAGS) $< -o $@
 
+# the OS loader rules
 $(OBJECT_DIR)%.o: $(LOADER_DIR)%.asm
 	$(ASM) $(ASMFLAGS) $< -o $@
 
@@ -50,8 +59,19 @@ $(LOADER_IMAGE): $(LOADER_OBJECTS)
 	# $(LINK) $(LINKFLAGS) -o $(LOADER_IMAGE) $(LOADER_OBJECTS)
 	cp $(LOADER_OBJECTS) $(LOADER_IMAGE)
 
-$(TARGET): $(BOOT_IMAGE) $(LOADER_IMAGE)
-	python ./drv/main.py -f $(OUTPUT_DIR)boot.bin -s $(OUTPUT_DIR)loader.bin -o $(OUTPUT_FILE)
+# the kernel rules
+$(OBJECT_DIR)kernel/%.o: $(KERNEL_DIR)%.c
+	$(CC) $(CCFLAGS) $< -o $@
+
+$(OBJECT_DIR)kernel/%.o: $(KERNEL_DIR)%.asm
+	$(ASM) $(ASMFLAGSL) $< -o $@
+
+$(KERNEL_IMAGE): $(KERNEL_OBJECTS)
+	$(LINK) $(LINKFLAGS) -o $@ $<
+
+# the final ruleset
+$(TARGET): $(BOOT_IMAGE) $(LOADER_IMAGE) $(KERNEL_IMAGE)
+	python ./drv/main.py -f $(BOOT_IMAGE) -s $(LOADER_IMAGE) $(KERNEL_IMAGE) -o $(OUTPUT_FILE)
     
 
 

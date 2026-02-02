@@ -5,7 +5,7 @@ import os
 nsectors = 64
 buf = bytearray(nsectors * 512) 
 used = [0] * nsectors
-
+used[1] = 1
 filelist = []
 
 def write_sector(data, sector):
@@ -39,10 +39,10 @@ def add_file(file, sector=-1, recname=""):
                         break;
                 if found:
                     sector = i
-            if found == False:
+                    break
+            if sector == -1:
                 print(f"couldn't find an empty sector for file {file}:{bslen}")
-        else:
-            write_data(bs, sector)
+        write_data(bs, sector)
         if recname == "":
             recname = os.path.splitext(os.path.basename(file))[0]
         filelist.append((recname, sector, bslen))
