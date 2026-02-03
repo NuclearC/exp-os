@@ -52,7 +52,7 @@ def write_file_table():
     print(filelist)
     off = 512 # second sector
     for i in filelist:
-        struct.pack_into('<H', buf, off, i[1])
+        struct.pack_into('<H', buf, off, 1+i[1])
         off += 2
         struct.pack_into('<H', buf, off, i[2])
         off += 2

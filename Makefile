@@ -36,13 +36,22 @@ KERNEL_OBJECTS := $(patsubst $(KERNEL_DIR)%.c,$(OBJECT_DIR)kernel/%.o,$(KERNEL_S
 KERNEL_OBJECTS := $(patsubst $(KERNEL_DIR)%.asm,$(OBJECT_DIR)kernel/%.o,$(KERNEL_OBJECTS))
 KERNEL_IMAGE := $(OUTPUT_DIR)kernel.bin
 
-OBJECTS += $(LOADER_OBJECTS) $(KERNEL_OBJECTS) 
+# the util images
+UTIL_DIR := ./util/
+UTIL_SOURCES := $(wildcard $(UTIL_DIR)*.asm)
+UTIL_OBJECTS := $(patsubst $(UTIL_DIR)%.asm,$(OBJECT_DIR)util/%.o,$(UTIL_SOURCES))
+ 
+OBJECTS += $(LOADER_OBJECTS) $(KERNEL_OBJECTS) $(UTIL_OBJECTS)
 IMAGES += $(BOOT_IMAGE) $(LOADER_IMAGE) $(KERNEL_IMAGE)
 
 all: $(TARGET)
 
 clean:
 	rm $(IMAGES) $(OBJECTS) $(OUTPUT_FILE)
+
+# util rules
+$(OBJECT_DIR)util/%.o: $(UTIL_DIR)%.asm
+	$(ASM) $(ASMFLAGSL) $< -o $@
 
 # bootloader rules
 $(OUTPUT_DIR)%.bin: $(BOOT_DIR)%.asm
@@ -66,8 +75,8 @@ $(OBJECT_DIR)kernel/%.o: $(KERNEL_DIR)%.c
 $(OBJECT_DIR)kernel/%.o: $(KERNEL_DIR)%.asm
 	$(ASM) $(ASMFLAGSL) $< -o $@
 
-$(KERNEL_IMAGE): $(KERNEL_OBJECTS)
-	$(LINK) $(LINKFLAGS) -o $@ $<
+$(KERNEL_IMAGE): $(KERNEL_OBJECTS) $(UTIL_OBJECTS)
+	$(LINK) $(LINKFLAGS) -o $@ $(KERNEL_OBJECTS) $(UTIL_OBJECTS)
 
 # the final ruleset
 $(TARGET): $(BOOT_IMAGE) $(LOADER_IMAGE) $(KERNEL_IMAGE)
