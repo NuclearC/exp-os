@@ -86,27 +86,23 @@ ldr_entry: ;
     ; eax now contains the sector of the kernel
     ; edx contains the length of the kernel in bytes
     ; now we load it
-    push eax
+    mov ebx, eax ; EBX = the sector number
     mov eax, edx
     xor edx, edx
     add eax, 511 ; ceil up division
     mov ecx, 512
-    div ecx
-    mov ecx, eax ; number of sectors divided up
-    pop eax
-    
-    mov edi, KERNEL_BASE
-    
+    div ecx ; ECX = the number of sectors of kernel
+    mov ecx, eax 
+    mov edi, KERNEL_BASE 
     .loop:
-        push ecx 
-        push eax ; argument sector number
+        push ecx
+        push ebx ; argument sector number
         push edi ; argument destination buffer
         call _io_read_sector
         add esp, 8 ; clean up the stack
+        add edi, 512 ; increment the pointer
         pop ecx
-        add edi, eax ; read this many bytes
-        pop eax
-        inc eax
+        inc ebx
         loop .loop
 
     jmp 08h:KERNEL_BASE

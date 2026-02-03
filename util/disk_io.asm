@@ -17,6 +17,7 @@ _io_read_sector:
     push ebp
     mov ebp, esp
 
+    push ebx
     push edi
     mov edi, [ebp + 8] ; the destination buffer
     mov ecx, [ebp + 12] ; the sector number
@@ -59,6 +60,7 @@ _io_read_sector:
 
     mov eax, 512 ; TODO 
     pop edi
+    pop ebx
     pop ebp
     ret
 
