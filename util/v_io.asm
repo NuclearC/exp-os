@@ -12,10 +12,13 @@ section .text
 ; Parameters: the pointer to string (zero-terminated)
 ;             the row on the screen
 ;             the column on the screen
+;             the color
 global _v_print
 _v_print:
     push ebp
     mov ebp, esp
+
+    mov edx, [ebp + 20] ; the color
 
     mov ecx, VGA_BASE
     mov eax, [ebp + 16] ; the column
@@ -36,7 +39,7 @@ _v_print:
         test al, al
         jz .exit
         mov [ecx], al
-        mov [ecx + 1], 03h
+        mov [ecx + 1], dl
         add ecx, 2
         jmp .loop
     .exit:

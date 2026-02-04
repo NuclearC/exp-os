@@ -1,17 +1,16 @@
 
-extern void _v_print(const char* str, int row, int col);
-extern void _io_read_sector(char* buf, int sector);
-
-const char* long_text = "asdfausdhfasdufhuiashdfuhuasdfhuihuzhxcivuizxchvuihziuxcvhuizhxcuivhzuixchvuihzxcuivhuihdfuivhusdahfvgasdyfugyuasgdfyugyuqwegrfuygqwyufgyuqyudfqa\0";
+#include "modules/fs/filesystem.h"
+#include "util/v_io.h"
 
 int KeMain(void) {
-    _v_print("Hello World", 0, 0);
     
-    char buf[512];
-    _io_read_sector(buf, 2);
-
-    _v_print(buf + 4, 1, 0);
-    _v_print(long_text, 2, 4);
+    for (int i = 0; i < 16; i++)
+       _v_print("Hello World", i, 16, ((15-i)<<4) | i);
+    FsInitialize();
+    int index = FsFindFile("boot");
+    char buf[10] = "Hello x \0";
+    buf[6] = index + 0x30;
+    _v_print(buf, 1, 0, 0x0f);
 
     while (1) ;
     return 0;
