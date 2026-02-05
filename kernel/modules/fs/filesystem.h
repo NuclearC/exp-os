@@ -18,7 +18,7 @@ int FsFindFile(const char* name);
 FileHandle* FsOpenFile(FileIndex fidx);
 
 int FsReadBytes(FileHandle* handle, char* buffer, size_t nbytes);
-
+int FsQuerySize(FileHandle* handle);
 
 #endif // NC_FILESYSTEM_H_
 

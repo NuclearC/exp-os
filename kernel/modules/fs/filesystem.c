@@ -69,7 +69,10 @@ int FsReadBytes(FileHandle* handle, char* buffer, size_t nbytes) {
     return ret;
 }
 
-    
+int FsQuerySize(FileHandle* handle) {
+    FileTableEntry* entry = &file_table[handle->file_index];
+    return entry->length; 
+}    
 
 
 

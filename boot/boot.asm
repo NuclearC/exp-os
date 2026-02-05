@@ -8,7 +8,7 @@ start:
 
 boot_scnd: 
     mov ah, 2
-    mov al, 1 ; number of sectors to read
+    mov al, 6 ; number of sectors to read
     mov ch, 0 ; cyllinder number
     mov cl, 3 ; starting sector
     mov dh, 0 ; head number

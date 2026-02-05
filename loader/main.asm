@@ -1,13 +1,20 @@
 org 0x1000
 bits 16
 
-section .text
+CODE_SEG equ 08h
+DATA_SEG equ 10h
+KERNEL_BASE equ 100000h
 
+section .text
 start:
     cli ; clear interrupts 
     ; clear the segment registers 
     xor ax, ax
     mov ds, ax
+    ; enable A20 line
+    in al, 0x92
+    or al, 2
+    out 0x92, al
     ; load the Global Descriptor Table 
     lgdt [gdt_desc]    
     ; enable Protected Mode
@@ -29,45 +36,76 @@ clear_pipe: ;
     ; setup the stack
     mov ebp, 0x9F000
     mov esp, ebp
-    ; now we are in the protected mode, we can load the necessary modules
+    ; load the Interrupt Descriptor Table
+    lidt [idt_desc]
+    ; setup the PIC
+    call setup_PIC
+    ; enable hardware interrupts
+    sti
+    ; now we are in the protected mode, we can load the necessary module
     jmp ldr_entry
 
-gdt:
-    .gdt_null:
-        dq 0
-    .gdt_code:
-        dw 0FFFFh
-        dw 0
-        db 0
-        db 10011010b
-        db 11001111b
-        db 0
-    .gdt_data:
-        dw 0FFFFh
-        dw 0
-        db 0
-        db 10010010b
-        db 11001111b
-        db 0
-gdt_end:
-gdt_desc:
-    dw gdt_end - gdt
-    dd gdt
-CODE_SEG equ 08h
-DATA_SEG equ 10h
-KERNEL_BASE equ 100000h
+interrupt_st: db "unhandled interrupt", 0
+align 4
+test_int:
+    pusha
+    call _v_clear
+    mov eax, 0x0f
+    push eax
+    mov eax, 0x00
+    push eax
+    push eax
+    mov eax, interrupt_st
+    push eax
+    call _v_print    
+    add esp, 16
+    popa
+    iret
 
-kernel_str db "kernel", 0
-test_str db "Found kernel on sector %u", 0
+PIC1 equ 0x20
+PIC2 equ 0xA0
+PIC1_CMD equ PIC1
+PIC1_DATA equ PIC1+1
+PIC2_CMD equ PIC2
+PIC2_DATA equ PIC2+1
+; sets up the Programmable Interrupt Controller
+setup_PIC:
+    ; save the initial masks
+    in al, PIC1_DATA
+    mov cl, al
+    in al, PIC2_DATA
+    mov ch, al 
 
-%include "disk_io.asm"
-%include "v_io.asm"
+    mov al, 0x11
+    out PIC1_CMD, al
+    out PIC2_CMD, al
+
+    mov al, 0x20
+    out PIC1_DATA, al
+    mov al, 0x28
+    out PIC2_DATA, al
+
+    mov al, 0x04
+    out PIC1_DATA, al
+    mov al, 0x02
+    out PIC2_DATA, al
+
+    mov al, 0x01
+    out PIC1_DATA, al
+    out PIC2_DATA, al
+
+    ; restore masks
+    mov al, cl
+    or al, 0xff
+    out PIC1_DATA, al
+    mov al, ch
+    or al, 0xff
+    out PIC2_DATA, al   
+
+    ret
 
 ; Protected Mode entry point
-ldr_entry: ; 
-    push ebp
-    mov ebp, esp
-
+ldr_entry:  
     call _v_clear
     ; allocate 512 bytes for the sector
     sub esp, 512
@@ -90,7 +128,7 @@ ldr_entry: ;
     mov eax, edx
     xor edx, edx
     add eax, 511 ; ceil up division
-    mov ecx, 512
+    mov ecx, 512 
     div ecx ; ECX = the number of sectors of kernel
     mov ecx, eax 
     mov edi, KERNEL_BASE 
@@ -105,5 +143,51 @@ ldr_entry: ;
         inc ebx
         loop .loop
 
-    jmp 08h:KERNEL_BASE
+    jmp CODE_SEG:KERNEL_BASE
+
+gdt:
+    .gdt_null:
+        dq 0
+    .gdt_code:
+        dw 0FFFFh
+        dw 0
+        db 0
+        db 10011010b
+        db 11001111b
+        db 0
+    .gdt_data:
+        dw 0FFFFh
+        dw 0
+        db 0
+        db 10010010b
+        db 11001111b
+        db 0
+gdt_end:
+gdt_desc:
+    dw gdt_end - gdt - 1
+    dd gdt
+
+align 8
+idt:
+    dw test_int ; the address
+    dw CODE_SEG ; code segment
+    db 0x00
+    db 0x8e
+    dw 0
+times 0x74 dq 0 
+    dw test_int ; the address
+    dw CODE_SEG ; code segment
+    db 0x00
+    db 0x8e
+    dw 0
+idt_end:
+idt_desc:
+    dw idt_end - idt - 1
+    dd idt
+
+kernel_str db "kernel", 0
+
+%include "disk_io.asm"
+%include "v_io.asm"
+
 
