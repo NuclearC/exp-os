@@ -1,15 +1,15 @@
 
 #include "modules/fs/filesystem.h"
-#include "util/v_io.h"
+#include "modules/vga/vga_io.h"
+#include "ke_main.h"
+#include "idt.h"
 
-int KeMain(void) {
-
-    _v_print("kernel loaded", 0, 0, 0x08);
-    for (int i = 0; i < 16; i++)
-       _v_print("Hello World", i, 16, ((15-i)<<4) | i);
+int KAPI KeMain(void) {
     FsInitialize();
-    
-
+    SetupInterrupts();    
+   
+    VgaPrintString("Kernel initialized...\n", 7);
+ 
     while (1) ;
     return 0;
 }

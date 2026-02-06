@@ -2,7 +2,8 @@
 #ifndef NC_FILESYSTEM_H_
 #define NC_FILESYSTEM_H_
 
-#include "ke_types.h"
+#include "typedefs.h"
+#include "ke_main.h"
 
 typedef uint32_t FileIndex;
 
@@ -13,12 +14,12 @@ typedef struct {
     FileIndex file_index;
 } FileHandle;
 
-int FsInitialize(void);
-int FsFindFile(const char* name);
-FileHandle* FsOpenFile(FileIndex fidx);
+int KAPI FsInitialize(void);
+int KAPI FsFindFile(const char* name);
+FileHandle* KAPI FsOpenFile(FileIndex fidx);
 
-int FsReadBytes(FileHandle* handle, char* buffer, size_t nbytes);
-int FsQuerySize(FileHandle* handle);
+int KAPI FsReadBytes(FileHandle* handle, char* buffer, size_t nbytes);
+int KAPI FsQuerySize(FileHandle* handle);
 
 #endif // NC_FILESYSTEM_H_
 

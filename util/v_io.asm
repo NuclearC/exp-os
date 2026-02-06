@@ -8,6 +8,36 @@ VGA_HEIGHT equ 25
 
 section .text
 
+; SUBROUTINE - changes the cursor position
+; Parameter - the cursor offset in abs. addr
+global _v_cursor
+_v_cursor:
+    push ebp
+    mov ebp, esp
+    push ebx
+    mov ebx, [ebp + 8] ; the offset of cursor
+    
+    mov dx, 0x03d4
+    mov al, 0x0f
+    out dx, al
+
+    inc dl
+    mov al, bl
+    out dx, al
+
+    dec dl
+    mov al, 0x0e
+    out dx, al
+    
+    inc dl
+    mov al, bh
+    out dx, al
+
+    pop ebx
+    pop ebp
+    ret
+    
+
 ; SUBROUTINE - prints a string on the screen
 ; Parameters: the pointer to string (zero-terminated)
 ;             the row on the screen

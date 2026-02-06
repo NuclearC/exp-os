@@ -4,7 +4,7 @@
 
 ASM := nasm
 ASMFLAGS := -f bin -i ./util/
-ASMFLAGSL := -f coff -i ./util/
+ASMFLAGSL := -f elf32 -i ./util/
 LINK := ld
 LINKFLAGS := -T ./kernel/linker.ld -m elf_i386 --oformat binary 
 CC := gcc
@@ -31,10 +31,12 @@ LOADER_IMAGE := $(OUTPUT_DIR)loader.bin
 # the OS kernel files
 KERNEL_DIR := ./kernel/
 KERNEL_SOURCES := $(wildcard $(KERNEL_DIR)*.c)
+KERNEL_SOURCES += $(wildcard $(KERNEL_DIR)modules/vga/*.c)
 KERNEL_SOURCES += $(wildcard $(KERNEL_DIR)modules/fs/*.c)
 KERNEL_SOURCES += $(wildcard $(KERNEL_DIR)*.asm)
 KERNEL_OBJECTS := $(patsubst $(KERNEL_DIR)%.c,$(OBJECT_DIR)kernel/%.o,$(KERNEL_SOURCES))
-KERNEL_OBJECTS := $(patsubst $(KERNEL_DIR)modules/fs/%.c,$(OBJECT_DIR)kernel/modules/%.o,$(KERNEL_OBJECTS))
+KERNEL_OBJECTS := $(patsubst $(KERNEL_DIR)modules/vga/%.c,$(OBJECT_DIR)kernel/modules/vga/%.o,$(KERNEL_OBJECTS))
+KERNEL_OBJECTS := $(patsubst $(KERNEL_DIR)modules/fs/%.c,$(OBJECT_DIR)kernel/modules/fs/%.o,$(KERNEL_OBJECTS))
 KERNEL_OBJECTS := $(patsubst $(KERNEL_DIR)%.asm,$(OBJECT_DIR)kernel/%.o,$(KERNEL_OBJECTS))
 KERNEL_IMAGE := $(OUTPUT_DIR)kernel.bin
 
@@ -75,12 +77,14 @@ $(OBJECT_DIR)kernel/%.o: $(KERNEL_DIR)%.c
 	$(CC) $(CCFLAGS) $< -o $@
 $(OBJECT_DIR)kernel/modules/fs/%.o: $(KERNEL_DIR)modules/fs/%.c
 	$(CC) $(CCFLAGS) $< -o $@
-
+$(OBJECT_DIR)kernel/modules/vga/%.o: $(KERNEL_DIR)modules/vga/%.c
+	$(CC) $(CCFLAGS) $< -o $@
 $(OBJECT_DIR)kernel/%.o: $(KERNEL_DIR)%.asm
 	$(ASM) $(ASMFLAGSL) $< -o $@
 
+# we force ke_main.o to be the first object linked
 $(KERNEL_IMAGE): $(KERNEL_OBJECTS) $(UTIL_OBJECTS)
-	$(LINK) $(LINKFLAGS) -o $@ $(KERNEL_OBJECTS) $(UTIL_OBJECTS)
+	$(LINK) $(LINKFLAGS) -o $@ $(OBJECT_DIR)kernel/ke_main.o $(patsubst $(OBJECT_DIR)kernel/ke_main.o,, $(KERNEL_OBJECTS)) $(UTIL_OBJECTS)
 
 # the final ruleset
 $(TARGET): $(BOOT_IMAGE) $(LOADER_IMAGE) $(KERNEL_IMAGE)

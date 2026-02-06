@@ -36,12 +36,8 @@ clear_pipe: ;
     ; setup the stack
     mov ebp, 0x9F000
     mov esp, ebp
-    ; load the Interrupt Descriptor Table
-    lidt [idt_desc]
     ; setup the PIC
     call setup_PIC
-    ; enable hardware interrupts
-    sti
     ; now we are in the protected mode, we can load the necessary module
     jmp ldr_entry
 
@@ -166,25 +162,6 @@ gdt_end:
 gdt_desc:
     dw gdt_end - gdt - 1
     dd gdt
-
-align 8
-idt:
-    dw test_int ; the address
-    dw CODE_SEG ; code segment
-    db 0x00
-    db 0x8e
-    dw 0
-times 0x74 dq 0 
-    dw test_int ; the address
-    dw CODE_SEG ; code segment
-    db 0x00
-    db 0x8e
-    dw 0
-idt_end:
-idt_desc:
-    dw idt_end - idt - 1
-    dd idt
-
 kernel_str db "kernel", 0
 
 %include "disk_io.asm"

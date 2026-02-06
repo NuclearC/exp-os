@@ -2,20 +2,32 @@
 ; Procedures for IDT
 
 
+
+
 bits 32
-; SUBROUTINE Load IDT
-; Parameters - IDT as 6 bytes on the stack
-global _idt_load
-_idt_load:
+
+section .text
+global _idt_setup
+_idt_setup:
     push ebp
     mov ebp, esp
-    lidt [ebp + 8]
+    lidt [idt_desc]
+    sti
+    mov eax, idt
     pop ebp
     ret
 
-; SUBROUTINE enable hardware interrupts
-; Parameters - none
-global _idt_enable_hw
-_idt_enable_hw:
-    sti
+global _idt_addr
+_idt_addr:
+    mov eax, idt_desc
     ret
+
+section .data
+align 8
+idt:
+    times 256 dq 0 
+idt_end:
+idt_desc:
+    dw idt_end - idt - 1
+    dd idt
+
