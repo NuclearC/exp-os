@@ -7,6 +7,10 @@
 #define KPRIV
 #define KPACK __attribute__((packed))
 
+#define KERNEL_BASE 0x100000
+#define CODE_SEG 0x08
+#define DATA_SEG 0x10
+
 #endif
 
 

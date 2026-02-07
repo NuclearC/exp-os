@@ -1,9 +1,7 @@
 org 0x1000
 bits 16
 
-CODE_SEG equ 08h
-DATA_SEG equ 10h
-KERNEL_BASE equ 100000h
+%include "util/seg.asm"
 
 section .text
 start:
@@ -37,68 +35,9 @@ clear_pipe: ;
     mov ebp, 0x9F000
     mov esp, ebp
     ; setup the PIC
-    call setup_PIC
+    ; call setup_PIC
     ; now we are in the protected mode, we can load the necessary module
     jmp ldr_entry
-
-align 4
-test_int:
-    pusha
-    call _v_clear
-    mov eax, 0x0f
-    push eax
-    mov eax, 0x00
-    push eax
-    push eax
-    mov eax, interrupt_st
-    push eax
-    call _v_print    
-    add esp, 16
-    popa
-    iret
-
-PIC1 equ 0x20
-PIC2 equ 0xA0
-PIC1_CMD equ PIC1
-PIC1_DATA equ PIC1+1
-PIC2_CMD equ PIC2
-PIC2_DATA equ PIC2+1
-; sets up the Programmable Interrupt Controller
-setup_PIC:
-    ; save the initial masks
-    in al, PIC1_DATA
-    mov cl, al
-    in al, PIC2_DATA
-    mov ch, al 
-
-    mov al, 0x11
-    out PIC1_CMD, al
-    out PIC2_CMD, al
-
-    mov al, 0x20
-    out PIC1_DATA, al
-    mov al, 0x28
-    out PIC2_DATA, al
-
-    mov al, 0x04
-    out PIC1_DATA, al
-    mov al, 0x02
-    out PIC2_DATA, al
-
-    mov al, 0x01
-    out PIC1_DATA, al
-    out PIC2_DATA, al
-
-    ; restore masks
-    mov al, cl
-    or al, 0xff
-    out PIC1_DATA, al
-    mov al, ch
-    or al, 0xff
-    out PIC2_DATA, al   
-
-    ret
-
 ; Protected Mode entry point
 ldr_entry:  
     call _v_clear

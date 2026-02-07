@@ -1,8 +1,9 @@
 
 ; Procedures for IDT
 
-
 bits 32
+
+%include "util/seg.asm"
 
 section .text
 
@@ -10,18 +11,20 @@ section .text
 ; Parameters none
 global _idt_setup
 _idt_setup:
-    push ebp
-    mov ebp, esp
     lidt [idt_desc]
-    sti
     mov eax, idt
-    pop ebp
     ret
 
 ; SUBROUTINE get the address of the IDT
 global _idt_addr
 _idt_addr:
-    mov eax, idt_desc
+    mov eax, idt
+    ret
+
+; SUBROUTINE enable hardware interrupts 
+global _idt_enable
+_idt_enable:
+    sti
     ret
 
 section .data

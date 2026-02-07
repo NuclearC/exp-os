@@ -14,9 +14,8 @@ section .text
 ; Return value: eax - number of bytes read or 0 if failed  
 global _io_read_sector
 _io_read_sector:
-    push ebp
-    mov ebp, esp
-
+    enter 0
+    
     push ebx
     push edi
     mov edi, [ebp + 8] ; the destination buffer
@@ -61,7 +60,8 @@ _io_read_sector:
     mov eax, 512 ; TODO 
     pop edi
     pop ebx
-    pop ebp
+
+    leave
     ret
 
 ; SUBROUTINE: find a file by name
@@ -71,8 +71,7 @@ _io_read_sector:
 ;               edx - the length of the file
 global _io_find_file
 _io_find_file:
-    push ebp
-    mov ebp, esp
+    enter 0
     xor eax, eax
     xor edx, edx
     
@@ -105,7 +104,7 @@ _io_find_file:
 
     .exit:
     pop edi
-    pop ebp
+    leave
     ret
 
 

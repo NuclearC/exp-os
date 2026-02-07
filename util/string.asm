@@ -9,9 +9,8 @@ section .text
 ; Return value: eax - 0 if equal up to the null terminator
 global _s_strcmp
 _s_strcmp:
-    push ebp
-    mov ebp, esp
-    
+    enter 0
+     
     cld ; for lodsb
     push esi
     mov esi, [ebp + 8] ; the first string
@@ -29,7 +28,7 @@ _s_strcmp:
         mov eax, 1 
     .exit:
     pop esi
-    pop ebp
+    leave
     ret
 
 

@@ -12,8 +12,7 @@ section .text
 ; Parameter - the cursor offset in abs. addr
 global _v_cursor
 _v_cursor:
-    push ebp
-    mov ebp, esp
+    enter 0
     push ebx
     mov ebx, [ebp + 8] ; the offset of cursor
     
@@ -34,7 +33,7 @@ _v_cursor:
     out dx, al
 
     pop ebx
-    pop ebp
+    leave
     ret
     
 
@@ -45,8 +44,7 @@ _v_cursor:
 ;             the color
 global _v_print
 _v_print:
-    push ebp
-    mov ebp, esp
+    enter 0
 
     mov edx, [ebp + 20] ; the color
 
@@ -74,13 +72,14 @@ _v_print:
         jmp .loop
     .exit:
     pop esi
-    pop ebp
+    leave
     ret
 
 ; SUBROUTINE - clear the screen
 ; Parameters - none
 global _v_clear
 _v_clear:    
+    enter 0
     push eax
     push ecx
     mov ecx, VGA_HEIGHT*VGA_WIDTH*2
@@ -93,6 +92,7 @@ _v_clear:
         jnz .loop
     pop ecx
     pop eax
+    leave
     ret
         
     
