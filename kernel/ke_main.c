@@ -9,7 +9,8 @@ int KAPI KeMain(void) {
     SetupInterrupts();    
    
     VgaPrintString("Kernel initialized...\n", 7);
- 
+    VgaPrintString("next line\n", 7); 
+    
     while (1) ;
     return 0;
 }

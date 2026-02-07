@@ -41,7 +41,6 @@ clear_pipe: ;
     ; now we are in the protected mode, we can load the necessary module
     jmp ldr_entry
 
-interrupt_st: db "unhandled interrupt", 0
 align 4
 test_int:
     pusha
@@ -141,6 +140,10 @@ ldr_entry:
 
     jmp CODE_SEG:KERNEL_BASE
 
+%include "disk_io.asm"
+%include "v_io.asm"
+
+section .data
 gdt:
     .gdt_null:
         dq 0
@@ -163,8 +166,5 @@ gdt_desc:
     dw gdt_end - gdt - 1
     dd gdt
 kernel_str db "kernel", 0
-
-%include "disk_io.asm"
-%include "v_io.asm"
-
+interrupt_st db "unhandled interrupt", 0
 

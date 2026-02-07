@@ -2,11 +2,12 @@
 ; Procedures for IDT
 
 
-
-
 bits 32
 
 section .text
+
+; SUBROUTINE setup the interrupt descriptor table
+; Parameters none
 global _idt_setup
 _idt_setup:
     push ebp
@@ -17,6 +18,7 @@ _idt_setup:
     pop ebp
     ret
 
+; SUBROUTINE get the address of the IDT
 global _idt_addr
 _idt_addr:
     mov eax, idt_desc
