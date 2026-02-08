@@ -6,9 +6,7 @@
 #include "ke_main.h"
 
 extern int _s_strcmp(const char* s1, const char* s2);
-extern int _io_read_sector(char* buf, int sector);
-
-FileHandle open_handles[MAX_OPEN_FILES];
+extern int _io_read_sector(char* buf, int sector, int numsectors);
 
 typedef struct KPACK {
     uint16_t sector;
@@ -18,6 +16,7 @@ typedef struct KPACK {
 
 #define FILE_TABLE_SZ 512/16
 
+FileHandle open_handles[MAX_OPEN_FILES];
 FileTableEntry file_table[FILE_TABLE_SZ];
 
 int KAPI FsInitialize(void) {
@@ -26,7 +25,7 @@ int KAPI FsInitialize(void) {
         open_handles[i].file_index = FILE_INVALID_INDEX;
     }
     /* load the file table */
-    _io_read_sector((char*)file_table, 2); /* we read the second sector */
+    _io_read_sector((char*)file_table, 2, 1); /* we read the second sector */
 
     return 0; 
 }
@@ -60,8 +59,9 @@ int KAPI FsReadBytes(FileHandle* handle, char* buffer, size_t nbytes) {
     }
     char buf[512];
     int ret = 0;
+    
     for (uint16_t sec = entry->sector; sec < entry->sector + (len+511)/512; sec++) {
-        _io_read_sector(buf, sec);
+        _io_read_sector(buf, sec, 1);
         int cur = (len > 512) ? 512 : len;
         KeMemoryCopy(buffer + ret, buf, cur);
         ret += cur;

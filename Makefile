@@ -6,7 +6,7 @@ ASM := nasm
 ASMFLAGS := -f bin -i ./util/
 ASMFLAGSL := -f elf32 -i ./util/
 LINK := ld
-LINKFLAGS := -T ./kernel/linker.ld -m elf_i386 --oformat binary 
+LINKFLAGS := -T ./kernel/linker.ld
 CC := gcc
 CCFLAGS := -I. -I./kernel -fno-stack-protector -ffreestanding -nostdlib -m32 -fno-pie -c
 

@@ -25,6 +25,7 @@ boot_scnd:
  
     .loop:
         mov dx, es:[bx] ; sector
+        add dx, 1 ; xd
         mov cx, es:[bx + 2] ; len
         test cx, cx
         jz error ; error because we still havent found it
