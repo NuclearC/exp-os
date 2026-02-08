@@ -149,9 +149,17 @@ ldr_entry:
         pop ecx
         loop .ph_load 
 
+    ; TODO setup the paging
+    mov eax, page_directory
+    mov cr3, eax
+    ; enable paging
+    mov eax, cr0
+    or eax, (1<<31)|1 ; paging
+    mov cr0, eax
+
     mov esp, STACK_BASE
     mov ebp, esp ; reset the stack
-    jmp CODE_SEG:KERNEL_BASE 
+    jmp ebx 
 
 error:
     push 0x4
@@ -169,6 +177,30 @@ error:
 %include "elf_ldr.asm"
 
 section .data
+align 4096
+page_directory:
+    dd page_table_0 + 0x003 ; Entry 0: identity map via page table
+    times 767 dd 0
+    dd page_table_1 + 0x003 ; Entry 768: higher-half via same page table
+    times 255 dd 0 
+
+page_table_0:
+    %assign i 0
+    %rep 1024
+        dd (i << 12) | 0x003    ; Map 4KB pages (present, writable)
+        %assign i i+1
+    %endrep 
+
+page_table_1:
+    %assign i 0
+    %rep 1024
+        dd (i << 12) | 0x003    ; Map 4KB pages (present, writable)
+        %assign i i+1
+    %endrep 
+
+
+
+
 gdt:
     .gdt_null:
         dq 0

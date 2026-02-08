@@ -2,7 +2,7 @@ import sys
 import struct
 import os
 
-nsectors = 64
+nsectors = 256 # 128kb 
 buf = bytearray(nsectors * 512) 
 used = [0] * nsectors
 used[1] = 1

@@ -15,9 +15,9 @@ int KAPI KeMain(void) {
     VgaPrintString("Kernel initialized...\n", 7);
 
     uint8_t buf[512];
-    _io_read_bytes(buf, 2, 4, 4); 
+    _io_read_bytes(buf, 1, 4, 4); 
     print_buf(buf, 10);
-    _io_read_bytes(buf, 2, 20, 10);
+    _io_read_bytes(buf, 1, 20, 10);
     print_buf(buf, 10);
 
     while (1) {

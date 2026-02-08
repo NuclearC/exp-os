@@ -31,6 +31,16 @@ extern _pic_int_end
     popad
 %endmacro
 
+global _isr_pf
+_isr_pf:
+    int_begin
+    push esp
+    extern _IsrPFault
+    call _IsrPFault
+    add esp, 4
+    int_end
+    iret
+
 global _isr_zero_divide
 _isr_zero_divide:
     int_begin

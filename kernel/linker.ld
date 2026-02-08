@@ -5,24 +5,26 @@ ENTRY(KeMain)
 
 SECTIONS
 {
-    . = 0x100000; /* load kernel at 1mb */
+    . = 0xc0100000; /* load kernel at 1mb */
 
-      .text : ALIGN(CONSTANT(MAXPAGESIZE)) {
-_TEXT_START_ = .;
-    *(.text)
-_TEXT_END_ = .;
-  }
-
-  .data : ALIGN(CONSTANT(MAXPAGESIZE)) {
-_DATA_START_ = .;
-    *(.data)
-_DATA_END_ = .;
-  }
-
-  .bss : ALIGN(CONSTANT(MAXPAGESIZE)) {
-_BSS_START_ = .;
-    *(.bss)
-_BSS_END_ = .;
-  }
+     .text : AT(ADDR(.text) - 0xC0000000)
+    {
+        *(.text)
+    }
+    
+    .rodata : AT(ADDR(.rodata) - 0xC0000000)
+    {
+        *(.rodata)
+    }
+    
+    .data : AT(ADDR(.data) - 0xC0000000)
+    {
+        *(.data)
+    }
+    
+    .bss : AT(ADDR(.bss) - 0xC0000000)
+    {
+        *(.bss)
+    }
 }
 
