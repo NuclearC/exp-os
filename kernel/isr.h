@@ -6,7 +6,6 @@ extern int _isr_zero_divide();
 extern int _isr_gp();
 extern int _isr_df();
 extern int _isr_pf();
-extern int _isr_keyboard();
 
 #endif
 

@@ -48,7 +48,11 @@ typedef struct KPACK {
 #define ISR_VE (ISR_FAULT   |0x14) /* Virt. exception */
 #define ISR_CP (ISR_FAULT   |0x15) /* Control protection exception */
 
+#define ISR_PIC_BASE 0x20
+
 int KPRIV InitializeInterrupts(void);
+
+int KAPI KeSetupIRQ(int index, void *ptr);
 
 #endif
 

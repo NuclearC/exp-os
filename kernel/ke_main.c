@@ -8,6 +8,7 @@ extern int _io_read_bytes(void * ptr, int sector, int offset, int len);
 char nib_to_hex(uint8_t);
 void to_hex(uint8_t, char*);
 void print_buf(uint8_t*, int);
+
 int KAPI KeMain(void) {
     InitializeInterrupts();    
     FsInitialize();

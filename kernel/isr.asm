@@ -72,17 +72,3 @@ _isr_df:
         hlt
         jmp .loop 
 
-global _isr_keyboard
-_isr_keyboard:
-    int_begin
-    extern _IsrKeyboard
-    
-    xor eax, eax
-    in al, 60h ; read the scancode
-    push eax
-    call _IsrKeyboard 
-    add esp, 4 ; clean the stack
-    call _pic1_int_end
-    int_end
-    iret
-

@@ -5,31 +5,16 @@
 #include "isr.h"
 #include "pic_st.h"
 
+#include "modules/keyboard/kb.h"
 #include "modules/vga/vga_io.h"
+
+InterruptDescriptor32* idt;
+
 int KAPI _IsrZeroDivide(void) {
     VgaPrintString("Zero Divison error\n", 7);
     while (1);
     return 0;
 }
-int KAPI _IsrKeyboard(int scancode) {
-
-    char st[10];
-    for (int i = 0; i < 10; i++) st[i] = 0;
-    int idx = 8;
-    while (scancode > 0) {
-        st[--idx] = (scancode % 10) + 0x30;
-        scancode /= 10;
-    }  
-
-    VgaPrintString("keyboard press ", 6);
-    VgaPrintString(st + idx, 5);
-    VgaPrintString("\n", 0);
-
-    *(int*)(0xc0800000) = 1; 
-
-    return 0;
-}
-
 int KAPI _IsrPFault(void) { 
     VgaPrintString("Page fault\n", 0x4);
     while (1);
@@ -60,15 +45,23 @@ void KPRIV SetGate(InterruptDescriptor32* table, int index,
     table[index].selector = selector;
 }
 
+
+int KAPI KeSetupIRQ(int index, void *ptr) {
+    if (index > 16) return 1;
+    SetGate(idt, ISR_PIC_BASE + index, ptr, GATE_ISR, CODE_SEG);
+
+    return 0;
+}
+
 int KPRIV InitializeInterrupts(void) {
-    InterruptDescriptor32* idt = (InterruptDescriptor32*) _idt_addr();
+    idt = (InterruptDescriptor32*) _idt_addr();
 
     SetGate(idt, ISR_DE, &_isr_zero_divide, GATE_ISR, CODE_SEG);
     SetGate(idt, ISR_GP, &_isr_gp, GATE_ISR, CODE_SEG);
     SetGate(idt, ISR_DF, &_isr_df, GATE_ISR, CODE_SEG);
     SetGate(idt, ISR_PF, &_isr_pf, GATE_ISR, CODE_SEG);
 
-    SetGate(idt, 0x21, &_isr_keyboard, GATE_ISR, CODE_SEG);
+    InitializeKeyboard();
  
     _idt_setup();
     _pic_setup();
