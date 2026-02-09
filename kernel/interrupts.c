@@ -8,6 +8,8 @@
 #include "modules/keyboard/kb.h"
 #include "modules/vga/vga_io.h"
 
+#include "error.h"
+
 InterruptDescriptor32* idt;
 
 int KAPI _IsrZeroDivide(void) {
@@ -15,20 +17,20 @@ int KAPI _IsrZeroDivide(void) {
     while (1);
     return 0;
 }
-int KAPI _IsrPFault(void) { 
-    VgaPrintString("Page fault\n", 0x4);
+int KAPI _IsrPFault(void* regs) {
+    KeShowHardError(0, "Page fault", "kernel", regs);
     while (1);
     return 0;
 }
 
-int KAPI _IsrGPFault(void) {
-    VgaPrintString("General Protection fault\n", 0x4);
+int KAPI _IsrGPFault(void* regs) {
+    KeShowHardError(0, "General protection fault", "kernel", regs);
     while (1);
     return 0;
 }
 
-int KAPI _IsrDFault(void) {
-    VgaPrintString("Double fault\n", 0x4);
+int KAPI _IsrDFault(void* regs) {
+    KeShowHardError(0, "Double fault", "kernel", regs);
     while (1);
     return 0;
 }
