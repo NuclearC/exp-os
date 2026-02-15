@@ -198,9 +198,6 @@ page_table_1:
         %assign i i+1
     %endrep 
 
-
-
-
 gdt:
     .gdt_null:
         dq 0

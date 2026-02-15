@@ -10,7 +10,7 @@
 #define DEFAULT_TEXT_COLOR 0x7
 
 int KAPI KePrint(const char* string, ...);
-int KAPI KePrintColor(const char* string, int color, ...);
+int KAPI KePrintColor(const char* string, int color, va_list args);
 
 #endif
 

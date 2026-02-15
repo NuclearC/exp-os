@@ -65,10 +65,10 @@ i = 1
 while i < len(sys.argv):
     arg = sys.argv[i]
     if arg == "-f": # first stage bootloader
-        add_file(sys.argv[i + 1], 0)
+        add_file(sys.argv[i + 1], 0, "boot")
         i += 2
     elif arg == "-s":
-        add_file(sys.argv[i + 1], 2)
+        add_file(sys.argv[i + 1], 2, "loader")
         i += 2
     elif arg == "-o":
         out = sys.argv[i + 1]

@@ -1,0 +1,15 @@
+
+
+
+set(CMAKE_ASM_NASM_OBJECT_FORMAT bin)
+
+enable_language(ASM_NASM)
+
+set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+file(GLOB SOURCE_FILES ${SOURCE_DIR}/*.asm)
+
+add_library(boot OBJECT ${SOURCE_FILES})
+set_property(GLOBAL APPEND PROPERTY IMAGE_FILES -f $<TARGET_OBJECTS:boot>)
+
+
+

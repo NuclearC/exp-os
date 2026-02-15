@@ -113,18 +113,21 @@ _io_read_bytes:
         .dummy:
             in ax, dx
             loop .dummy
-        mov [ebp - 8], ecx
         .read:
             mov ecx, [ebp - 4] ; the stored value 
-            shr ecx, 1
-            cmp ecx, 256
+            cmp ecx, 512 ; max
             jbe .proceed
-            mov ecx, 256 ; clamp ecx with 256
+            mov ecx, 512 ; clamp ecx with 512
+            sub ecx, [ebp - 8] ; skip the number of bytes to read
             .proceed: 
+                shr ecx, 1 ; divide by 2
                 sub [ebp - 4], ecx
                 sub [ebp - 4], ecx ; fuck me in the ass
                 mov dx, ATA1 + ATA_DATA ; data port
                 rep insw
+
+        xor ecx, ecx
+        mov [ebp - 8], ecx
  
         dec ebx
         jnz .read_sector_loop

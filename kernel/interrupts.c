@@ -6,14 +6,14 @@
 #include "pic_st.h"
 
 #include "modules/keyboard/kb.h"
-#include "modules/vga/vga_io.h"
+#include "modules/vga/vga_text.h"
 
 #include "error.h"
 
 InterruptDescriptor32* idt;
 
 int KAPI _IsrZeroDivide(void) {
-    VgaPrintString("Zero Divison error\n", 7);
+    VgaTextWrite("Zero Divison error\n", 7);
     while (1);
     return 0;
 }
@@ -72,5 +72,6 @@ int KPRIV InitializeInterrupts(void) {
 
     /* enable interrupts finally */
     _idt_enable();
+    return 0;
 }
 

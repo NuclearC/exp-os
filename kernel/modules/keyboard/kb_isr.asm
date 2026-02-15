@@ -15,10 +15,10 @@ _isr_keyboard:
     
     xor eax, eax
     in al, 60h ; read the scancode
-    push eax
+    push eax ; push it to the stack
     call _IsrKeyboardHandler
     add esp, 4 ; clean the stack
-    call _pic1_int_end
+    call _pic1_int_end ; acknowledge the interrupt
     int_end
     iret
 

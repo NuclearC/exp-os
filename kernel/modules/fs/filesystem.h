@@ -2,8 +2,8 @@
 #ifndef NC_FILESYSTEM_H_
 #define NC_FILESYSTEM_H_
 
-#include "typedefs.h"
-#include "ke_main.h"
+#include "kernel/typedefs.h"
+#include "kernel/ke_main.h"
 
 typedef uint32_t FileIndex;
 

@@ -5,22 +5,22 @@
 #include "typedefs.h"
 
 #define BACK_COL 0x1
-#define ERROR_COL (BACK_COL<<4) | 0xc
-#define INFO_COL (BACK_COL<<4) | 0xf
+#define ERROR_COL (BACK_COL << 4) | 0xc
+#define INFO_COL (BACK_COL << 4) | 0xf
 
 typedef struct {
     uint16_t gs, fs, es, ds;
     uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
 } Registers;
 
-
-
 char NibbleToChar(uint8_t n) {
-    if (n < 10) return '0' + n;
-    else return (n - 10) + 'A';
+    if (n < 10)
+        return '0' + n;
+    else
+        return (n - 10) + 'A';
 }
 
-void WriteByte(uint8_t b, char* ptr) {
+void WriteByte(uint8_t b, char *ptr) {
     *(ptr) = NibbleToChar(b >> 4);
     *(ptr + 1) = NibbleToChar(b & 0xf);
 }
@@ -30,7 +30,7 @@ void WriteReg16(uint16_t r, int row, int col) {
     buf[4] = 0;
     WriteByte((r >> 16) & 0xff, buf);
     WriteByte(r & 0xff, buf + 2);
-    VgaWriteString(buf, row, col, INFO_COL); 
+    VgaWriteString(buf, row, col, INFO_COL);
 }
 
 void WriteReg32(uint32_t r, int row, int col) {
@@ -40,23 +40,22 @@ void WriteReg32(uint32_t r, int row, int col) {
     WriteByte((r >> 16) & 0xff, buf + 2);
     WriteByte((r >> 8) & 0xff, buf + 4);
     WriteByte(r & 0xff, buf + 6);
-    VgaWriteString(buf, row, col, INFO_COL); 
+    VgaWriteString(buf, row, col, INFO_COL);
 }
 
-
-int KAPI KeShowHardError(int, const char* errormsg, 
-    const char* whatfailed, void* regptr) {
+int KAPI KeShowHardError(int, const char *errormsg, const char *whatfailed,
+                         void *regptr) {
     VgaClearString();
 
     for (int i = 0; i < 80 * 25; i++) {
         VgaWriteString(" ", (i / 80), (i % 80), BACK_COL << 4);
     }
-    Registers* regs = (Registers*) regptr;
+    Registers *regs = (Registers *)regptr;
 
     VgaWriteString("Encountered an unrecoverable error :(", 4, 5, INFO_COL);
     VgaWriteString(errormsg, 5, 5, ERROR_COL);
     VgaWriteString("Failed: ", 7, 6, INFO_COL);
-    VgaWriteString(whatfailed, 7, 16, INFO_COL);    
+    VgaWriteString(whatfailed, 7, 16, INFO_COL);
 
     VgaWriteString("Reg dump: ", 9, 6, INFO_COL);
 
@@ -71,7 +70,7 @@ int KAPI KeShowHardError(int, const char* errormsg,
 
     VgaWriteString("FS: ", 12, 16, INFO_COL);
     WriteReg16(regs->fs, 12, 20);
-    
+
     VgaWriteString("EAX: ", 9, 28, INFO_COL);
     WriteReg32(regs->eax, 9, 33);
 
@@ -96,8 +95,5 @@ int KAPI KeShowHardError(int, const char* errormsg,
     VgaWriteString("ESP: ", 16, 28, INFO_COL);
     WriteReg32(regs->esp, 16, 33);
 
-
-
     return 0;
 }
-

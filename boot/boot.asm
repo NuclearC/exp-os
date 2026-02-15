@@ -1,6 +1,6 @@
 
-org 0x7c00
 bits 16
+org 0x7c00
 
 start:
     mov ax, cs

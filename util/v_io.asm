@@ -50,11 +50,11 @@ _v_print:
 
     mov ecx, VGA_BASE
     mov eax, [ebp + 16] ; the column
-    imul eax, 2
+    mul eax, 2
     add ecx, eax
 
     mov eax, [ebp + 12] ; the row
-    imul eax, 2 * VGA_WIDTH
+    mul eax, 2 * VGA_WIDTH
     add ecx, eax
 
     push esi
@@ -68,10 +68,42 @@ _v_print:
         jz .exit
         mov [ecx], al
         mov [ecx + 1], dl
+        cmp ecx, VGA_BASE + VGA_WIDTH * VGA_HEIGHT * 2
+        jge .exit
+
         add ecx, 2
         jmp .loop
     .exit:
     pop esi
+    leave
+    ret
+
+; SUBROUTINE - print a character on the screen
+; parameters: the char
+;             thr row
+;             the col
+;             the color of the character
+global _v_print_char
+_v_print_char:
+    enter 0
+    push ebx
+    mov ecx, [ebp + 20] ; the color
+    
+    mov ebx, VGA_BASE
+    mov eax, [ebp + 16] ; the column
+    shl eax, 1 ; mul by 2
+    add ebx, eax
+   
+    mov eax, [ebp + 12] ; the row
+    mov edx, VGA_WIDTH * 2
+    mul edx
+    add ebx, eax
+
+    mov eax, [ebp + 8] ; the character
+    mov [ebx], eax
+    mov [ebx + 1], ecx
+    pop ebx
+    xor eax, eax
     leave
     ret
 
