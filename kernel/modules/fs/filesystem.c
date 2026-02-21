@@ -5,8 +5,11 @@
 #include "memory.h"
 #include "ke_main.h"
 
+#include "print.h"
+
 extern int _s_strcmp(const char* s1, const char* s2);
 extern int _io_read_sector(char* buf, int sector, int numsectors);
+extern int _io_read_bytes(char* buf, int sectors, int offset, int length); 
 
 typedef struct KPACK {
     uint16_t sector;
@@ -25,7 +28,7 @@ int KAPI FsInitialize(void) {
         open_handles[i].file_index = FILE_INVALID_INDEX;
     }
     /* load the file table */
-    _io_read_sector((char*)file_table, 2, 1); /* we read the second sector */
+    _io_read_bytes((char*)file_table, 1, 0, 512);
 
     return 0; 
 }
@@ -40,7 +43,7 @@ int KAPI FsFindFile(const char* name) {
 }
 
 FileHandle* KAPI FsOpenFile(FileIndex fidx) {
-    if (fidx >= FILE_TABLE_SZ && file_table[fidx].length <= 0) return 0;
+    if (fidx >= FILE_TABLE_SZ || file_table[fidx].length <= 0) return 0;
     for (int i = 0; i < MAX_OPEN_FILES; ++i) {
         if (open_handles[i].file_index == FILE_INVALID_INDEX) {
             open_handles[i].file_index = fidx;
@@ -51,23 +54,16 @@ FileHandle* KAPI FsOpenFile(FileIndex fidx) {
     return 0;
 }
 
-int KAPI FsReadBytes(FileHandle* handle, char* buffer, size_t nbytes) {
+int KAPI FsReadBytes(FileHandle* handle, int offset, char* buffer, size_t nbytes) {
     FileTableEntry* entry = &file_table[handle->file_index];
     uint16_t len = entry->length;
     if (len > nbytes) {
         len = nbytes;
     }
-    char buf[512];
-    int ret = 0;
-    
-    for (uint16_t sec = entry->sector; sec < entry->sector + (len+511)/512; sec++) {
-        _io_read_sector(buf, sec, 1);
-        int cur = (len > 512) ? 512 : len;
-        KeMemoryCopy(buffer + ret, buf, cur);
-        ret += cur;
-    } 
 
-    return ret;
+    int secoffset = offset % 512;
+    int sector = entry->sector + (offset / 512); 
+    return _io_read_bytes(buffer, sector, secoffset, nbytes);
 }
 
 int KAPI FsQuerySize(FileHandle* handle) {

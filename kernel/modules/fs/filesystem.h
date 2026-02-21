@@ -18,7 +18,7 @@ int KAPI FsInitialize(void);
 int KAPI FsFindFile(const char* name);
 FileHandle* KAPI FsOpenFile(FileIndex fidx);
 
-int KAPI FsReadBytes(FileHandle* handle, char* buffer, size_t nbytes);
+int KAPI FsReadBytes(FileHandle* handle, int offset, char* buffer, size_t nbytes);
 int KAPI FsQuerySize(FileHandle* handle);
 
 #endif // NC_FILESYSTEM_H_

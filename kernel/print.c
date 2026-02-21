@@ -31,7 +31,20 @@ int KAPI KePrintColor(const char* string, int color, va_list args) {
                     t /= 10;
                 }
                 } break;
-            } 
+            case 'x': {
+                uint32_t v = va_arg(args, uint32_t);
+                for (int i = 7; i >= 0; i--) {
+                    char ch = (char)((v >> (i * 4)) & 0xf);
+                    /* if (ch == 0 && (i != 0 && !first)) continue;
+                    first = 1;
+                    */
+                    if (ch < 10) ch += '0';
+                    else ch = (ch - 10) + 'A';
+                    VgaTextWriteChar(ch, color);
+                }
+                } break;
+            }
+            
         } else {
             VgaTextWriteChar(ch, color);
         }   

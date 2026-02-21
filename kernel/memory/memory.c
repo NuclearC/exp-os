@@ -1,6 +1,6 @@
 
 #include "memory.h"
-    
+
 int KAPI KeMemoryCopy(void* restrict dest, const void* restrict src, size_t nbytes) {
     const size_t ndwords = nbytes >> 2;
     for (size_t i = 0; i < ndwords; ++i) {
@@ -25,6 +25,24 @@ int KAPI KeMemoryCompare(const void* source1, const void* source2, size_t nbytes
         }
     }
     return 0;
+}
+
+void KAPI KeMemorySet(const void* source, int set, size_t nbytes) {
+    const size_t ndwords = nbytes >> 2;
+    for (size_t i = 0; i < ndwords; ++i) {
+        *((uint32_t*)source + i) = set; 
+    }
+    for (size_t i = 0; i < (nbytes & 3); ++i) {
+        *((uint8_t*)source + ndwords * 4 + i) = (set >> (8 * i)) & 0xff;
+    }
+}
+
+void KAPI KeMemoryZero(const void* source, size_t nbytes) {
+    KeMemorySet(source, 0, nbytes);
+}
+
+void* KAPI KeVirtualToPhysical(void* virt) {
+    return (void*)((uint32_t)virt + KERNEL_PBASE - KERNEL_VBASE);
 }
 
 

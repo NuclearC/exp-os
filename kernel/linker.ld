@@ -3,31 +3,28 @@ OUTPUT_FORMAT("elf32-i386")
 OUTPUT_ARCH(i386)
 ENTRY(KeMain)
 
+KERNEL_P_BASE = 0x100000;
+KERNEL_V_BASE = 0xc0000000;
+
 SECTIONS
 {
-    . = 0xc0100000; /* load kernel at 1mb */
+    . = KERNEL_V_BASE + SIZEOF_HEADERS; /* load kernel at 1mb */
     _kernel_start = .;
-     .text ALIGN (4K) : AT(ADDR(.text) - 0xC0000000)
+     .text ALIGN(4K) : AT(ADDR(.text) - KERNEL_V_BASE + KERNEL_P_BASE) 
     {
         *(.text)
     }
 
-    .rodata ALIGN(4K) : AT(ADDR(.rodata) - 0xC0000000) 
+    .rodata ALIGN(4K) : 
     {
         *(.rodata)
     }
 
-    .data ALIGN(4K) : AT(ADDR(.data) - 0xC0000000)
+    .data ALIGN(4K) : 
     {
         *(.data)
     }
     
-    .bss ALIGN(4K) : AT(ADDR(.bss) - 0xC0000000)
-    {
-        *(COMMON)
-        *(.bss)
-        *(.bootstrap_stack)
-    }
     _kernel_end = .;
 }
 

@@ -1,9 +1,9 @@
 
 bits 32
 
-global _start
+global _test
 
-_start:
+_test:
 
     mov eax, 1
     int 80h

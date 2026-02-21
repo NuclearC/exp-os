@@ -1,10 +1,40 @@
 org 0x1000
 bits 16
 
+SMAP_MAGIC equ 0x534D4150 ; 'SMAP'
+
 %include "util/seg.asm"
 
 section .text
 start:
+    ; load the memory map
+    xor ebx, ebx
+    mov es, bx ; for loading the memory map
+    mov di, memory_map_data
+    ; ES:DI points to memory_map_data
+    .loop:
+        mov edx, SMAP_MAGIC
+        mov eax, 0xE820
+        mov ecx, 20 ; number of bytes
+        int 0x15
+        jc .break
+        ; we check the return value
+        cmp eax, SMAP_MAGIC 
+        jne .break
+
+        mov eax, [memory_map_entry_count]
+        add al, 1 
+        mov [memory_map_entry_count], eax
+
+        add di, 24 
+        cmp di, [memory_map_data_end]
+        jae .break
+
+        test ebx, ebx
+        jnz .loop
+
+    .break:
+    
     cli ; clear interrupts 
     ; clear the segment registers 
     xor ax, ax
@@ -14,7 +44,8 @@ start:
     or al, 2
     out 0x92, al
     ; load the Global Descriptor Table 
-    lgdt [gdt_desc]    
+    lgdt [gdt_desc]  
+
     ; enable Protected Mode
     mov eax, cr0
     or eax, 1
@@ -159,7 +190,13 @@ ldr_entry:
 
     mov esp, STACK_BASE
     mov ebp, esp ; reset the stack
-    jmp ebx 
+    
+    push kernel_params ; kernel params
+    ; jump to KeMain
+    call ebx 
+    .loop: ; wtf?
+        hlt
+        jmp .loop
 
 error:
     push 0x4
@@ -177,6 +214,14 @@ error:
 %include "elf_ldr.asm"
 
 section .data
+
+kernel_params:
+memory_map_entry_count:
+    dd 0
+memory_map_data:
+    times 192 dd 0
+memory_map_data_end:
+
 align 4096
 page_directory:
     dd page_table_0 + 0x003 ; Entry 0: identity map via page table
@@ -184,6 +229,7 @@ page_directory:
     dd page_table_1 + 0x003 ; Entry 768: higher-half via same page table
     times 255 dd 0 
 
+; Identity map: from 0 to 1024 * 4096 (first 4MB)
 page_table_0:
     %assign i 0
     %rep 1024
@@ -191,24 +237,25 @@ page_table_0:
         %assign i i+1
     %endrep 
 
+; Kernel map: 0xc0000000 -> 0x00100000
 page_table_1:
     %assign i 0
     %rep 1024
-        dd (i << 12) | 0x003    ; Map 4KB pages (present, writable)
+        dd ((i << 12) + 0x100000) | 0x003    ; Map 4KB pages (present, writable)
         %assign i i+1
     %endrep 
 
 gdt:
     .gdt_null:
         dq 0
-    .gdt_code:
+    .gdt_su_code:
         dw 0FFFFh
         dw 0
         db 0
         db 10011010b
         db 11001111b
         db 0
-    .gdt_data:
+    .gdt_su_data:
         dw 0FFFFh
         dw 0
         db 0
@@ -219,6 +266,7 @@ gdt_end:
 gdt_desc:
     dw gdt_end - gdt - 1
     dd gdt
+
 kernel_str db "kernel", 0
 interrupt_st db "unhandled interrupt", 0
-error_str db "Failed to loader the kernel -- ", 0
+error_str db "Failed to load the kernel -- ", 0

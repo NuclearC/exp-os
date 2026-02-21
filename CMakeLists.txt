@@ -9,7 +9,7 @@ define_property(GLOBAL PROPERTY IMAGE_FILES
 add_subdirectory(${PROJECT_SOURCE_DIR}/boot)
 add_subdirectory(${PROJECT_SOURCE_DIR}/loader)
 add_subdirectory(${PROJECT_SOURCE_DIR}/kernel)
-# add_subdirectory(${PROJECT_SOURCE_DIR}/shell)
+add_subdirectory(${PROJECT_SOURCE_DIR}/shell)
 
 get_property(DRV_ARGS GLOBAL PROPERTY IMAGE_FILES)
 

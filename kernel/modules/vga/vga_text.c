@@ -1,6 +1,6 @@
 
 #include "vga_text.h"
-#include "memory.h"
+#include "memory/memory.h"
 
 static int current_print_row = 0;
 static int current_print_column = 0;
