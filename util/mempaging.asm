@@ -11,3 +11,11 @@ _mem_pg_load:
     mov cr3, eax
     leave
     ret
+
+global _mem_pg_invld
+_mem_pg_invld:
+    enter 0
+    invlpg [ebp + 8]   
+    leave
+    ret
+

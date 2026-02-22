@@ -2,12 +2,17 @@
 #ifndef NC_KE_MEMORY_PAGING_H_
 #define NC_KE_MEMORY_PAGING_H_
 
-#include "typedefs.h"
 #include "ke_main.h"
+#include "typedefs.h"
 
 #define PAGE_READ_WRITE 0x0001
 #define PAGE_ACCESS_ALL 0x0002
-#define PAGE_SIZE_4M    0x0004
+#define PAGE_SIZE_4M 0x0004
+
+#define PAGE_SIZE 4096
+
+#define PAGE_DIR_COUNT 1024
+#define PAGE_TABLE_COUNT 1024
 
 typedef union {
     struct {
@@ -42,22 +47,18 @@ typedef union {
     uint32_t wrd;
 } PageTableEntry32;
 
-typedef struct {
-    uint32_t base_low;
-    uint32_t base_high;
-    uint32_t length_low;
-    uint32_t length_high;
-    uint32_t type;
-    uint32_t acpi3_attr;
-} PhysicalMemoryMapEntry;
+void KPRIV InitializePages(void);
 
-void KPRIV InitializePages(const PhysicalMemoryMapEntry* memory_map, size_t nentries);
+void KPRIV KeInitializePageDirectories(PageDirectoryEntry32 *entry,
+                                       size_t nentries, int flags);
 
-void KPRIV KeInitializePageDirectories(PageDirectoryEntry32* entry, size_t nentries, int flags);
-void KPRIV KeInitializePageTables(PageTableEntry32* entry, size_t nentries, void* base_address, int flags);
-void KPRIV KeLoadPageDirectories(PageDirectoryEntry32* entry);
+void KPRIV KeInitializePageTables(PageTableEntry32 *entry, size_t nentries,
+                                  void *base_address, int flags);
+void KPRIV KeLoadPageDirectories(PageDirectoryEntry32 *entry);
+
+void KPRIV KeAllocatePageTables(void *memory, size_t length, void *page,
+                                int flags);
 /*
 int KPRIV KeAllocatePageTables(size_t nentries, int flags, void** paddr);
 */
-#endif 
-
+#endif

@@ -2,14 +2,14 @@ import sys
 import struct
 import os
 
-nsectors = 256 # 128kb 
+nsectors = 512 # 128kb 
 buf = bytearray(nsectors * 512) 
 used = [0] * nsectors
 used[1] = 1
 filelist = []
 
 def write_sector(data, sector):
-    print(f'writing {len(data)} bytes into sector {sector}')
+    # print(f'writing {len(data)} bytes into sector {sector}')
     buf[sector * 512: sector * 512 + min(len(data), 512)] = data    
     used[sector] = 1
 

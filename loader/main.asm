@@ -27,7 +27,7 @@ start:
         mov [memory_map_entry_count], eax
 
         add di, 24 
-        cmp di, [memory_map_data_end]
+        cmp di, memory_map_data_end
         jae .break
 
         test ebx, ebx
@@ -147,15 +147,20 @@ ldr_entry:
 
         ; we have read the PH entry to EDI, now we can do shit
         mov eax, [edi + ELF_P_TYPE]
-        test eax, PT_LOAD
-        jz .continue
+        cmp eax, PT_LOAD
+        jne .continue
 
-        mov eax, [edi + ELF_P_MEMSZ]
-        test eax, eax
-        jz .continue 
         mov eax, [edi + ELF_P_FILESZ]
         test eax, eax
         jz .continue
+
+        mov eax, [edi + ELF_P_MEMSZ]
+        add eax, [edi + ELF_P_PADDR]
+        cmp eax, [kernel_image_end]
+        jle .skip2
+            mov [kernel_image_end], eax
+        .skip2:
+
         ; we can load that bitch
         push esi ; store this
         ; now we push the args
@@ -169,6 +174,11 @@ ldr_entry:
         shr eax, 9
         push eax ; initial sector
         mov eax, [edi + ELF_P_PADDR]
+        cmp eax, [kernel_image_begin]
+        ja .skip
+            mov [kernel_image_begin], eax
+        .skip:
+
         push eax ; dest buffer
         call _io_read_bytes
         add esp, 16 ; restore the args
@@ -216,8 +226,21 @@ error:
 section .data
 
 kernel_params:
+    dd memory_map
+    dd kernel_image
+
+kernel_image:
+kernel_image_begin: dd 0xffffffff
+kernel_image_end:   dd 0
+kernel_stack_begin: dd 0
+kernel_stack_end:   dd KERNEL_PBASE + STACK_SIZE
+
+memory_map:
 memory_map_entry_count:
     dd 0
+memory_map_entry_pointer:
+    dd memory_map_data
+
 memory_map_data:
     times 192 dd 0
 memory_map_data_end:

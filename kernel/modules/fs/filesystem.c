@@ -19,8 +19,8 @@ typedef struct KPACK {
 
 #define FILE_TABLE_SZ 512/16
 
-FileHandle open_handles[MAX_OPEN_FILES];
-FileTableEntry file_table[FILE_TABLE_SZ];
+static FileHandle open_handles[MAX_OPEN_FILES];
+static FileTableEntry file_table[FILE_TABLE_SZ];
 
 int KAPI FsInitialize(void) {
     /* initialize the file system */

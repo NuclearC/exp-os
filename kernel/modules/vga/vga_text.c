@@ -2,8 +2,8 @@
 #include "vga_text.h"
 #include "memory/memory.h"
 
-static int current_print_row = 0;
-static int current_print_column = 0;
+static int current_print_row;
+static int current_print_column;
 
 int KAPI VgaTextScroll(int amount) {
     if (amount <= 0)
@@ -41,6 +41,8 @@ int KAPI VgaTextWrite(const char *str, int color) {
 }
 
 int KAPI VgaTextClear(void) {
+    current_print_row = 0;
+    current_print_column = 0;
     VgaClearString();
     return 0;
 }
