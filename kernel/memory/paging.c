@@ -62,6 +62,7 @@ int KPRIV KeAllocatePageTables(size_t nentries, int flags, void** paddr) {
 void KPRIV InitializePages(void) {
     PageTableEntry32 *base_table, *higher_table;
 
+    /* create the tables */
     base_directory = KeAllocatePhysicalMemory(
         sizeof(PageDirectoryEntry32) * PAGE_DIR_COUNT, 4096);
 
@@ -70,7 +71,6 @@ void KPRIV InitializePages(void) {
     higher_table = KeAllocatePhysicalMemory(
         sizeof(PageTableEntry32) * PAGE_TABLE_COUNT, 4096);
 
-    KePrint("basedir at %x \n", base_directory);
     KeMemoryZero(base_directory, PAGE_DIR_COUNT * sizeof(PageDirectoryEntry32));
     KeMemoryZero(base_table, PAGE_TABLE_COUNT * sizeof(PageTableEntry32));
     KeMemoryZero(higher_table, PAGE_TABLE_COUNT * sizeof(PageTableEntry32));
@@ -79,6 +79,7 @@ void KPRIV InitializePages(void) {
     KeInitializePageDirectories(base_directory, 1, PAGE_READ_WRITE);
     base_directory[0].wrd |= (size_t)base_table;
 
+    /* higher kernel mapping */
     KeInitializePageDirectories(base_directory + 768, 1, PAGE_READ_WRITE);
     base_directory[768].wrd |= (size_t)higher_table;
 
@@ -97,19 +98,25 @@ void KPRIV KeAllocatePageTables(void *memory, size_t length, void *page,
         size_t dirindex = (addr >> 22) & 1023;
         size_t tableindex = (addr >> 12) & 1023;
 
+        KePrint("probing %x %d %d \n", addr, dirindex, tableindex);
         if (base_directory[dirindex].wrd == 0) {
             KeInitializePageDirectories(&base_directory[dirindex], 1, flags);
             table = KeAllocatePhysicalMemory(
                 sizeof(PageTableEntry32) * PAGE_TABLE_COUNT, 4096);
-            KePrint("allocated tables %x \n", table);
+
+            KePrint("allocated pagedir for %x \n", dirindex << 22);
+
             base_directory[dirindex].wrd |= (size_t)table;
         } else {
             table =
-                (PageTableEntry32 *)(base_directory[dirindex].wrd & 0xffc00000);
+                (PageTableEntry32 *)(base_directory[dirindex].wrd & 0xfffff000);
+            KePrint("directory exists, proceeding [%x] \n", table);
         }
         if (table[tableindex].wrd == 0) {
+            KePrint("allocated table for %x \n",
+                    (dirindex << 22) | (tableindex << 12));
             KeInitializePageTables(&table[tableindex], 1, memory + i, flags);
         }
+        _mem_pg_invld(addr);
     }
-    _mem_pg_invld((int)table);
 }

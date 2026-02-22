@@ -5,6 +5,7 @@
 #include "isr.h"
 #include "pic_st.h"
 
+#include "memory/segment.h"
 #include "modules/keyboard/kb.h"
 #include "modules/vga/vga_text.h"
 
@@ -54,7 +55,7 @@ void KPRIV SetGate(InterruptDescriptor32 *table, int index, void *ptr, int type,
 int KAPI KeSetupIRQ(int index, void *ptr) {
     if (index > 16)
         return 1;
-    SetGate(idt, ISR_PIC_BASE + index, ptr, GATE_ISR, CODE_SEG);
+    SetGate(idt, ISR_PIC_BASE + index, ptr, GATE_ISR, KERNEL_CODE_SEGMENT);
 
     return 0;
 }
@@ -62,10 +63,10 @@ int KAPI KeSetupIRQ(int index, void *ptr) {
 int KPRIV InitializeInterrupts(void) {
     idt = (InterruptDescriptor32 *)_idt_addr();
 
-    SetGate(idt, ISR_DE, &_isr_zero_divide, GATE_ISR, CODE_SEG);
-    SetGate(idt, ISR_GP, &_isr_gp, GATE_ISR, CODE_SEG);
-    SetGate(idt, ISR_DF, &_isr_df, GATE_ISR, CODE_SEG);
-    SetGate(idt, ISR_PF, &_isr_pf, GATE_ISR, CODE_SEG);
+    SetGate(idt, ISR_DE, &_isr_zero_divide, GATE_ISR, KERNEL_CODE_SEGMENT);
+    SetGate(idt, ISR_GP, &_isr_gp, GATE_ISR, KERNEL_CODE_SEGMENT);
+    SetGate(idt, ISR_DF, &_isr_df, GATE_ISR, KERNEL_CODE_SEGMENT);
+    SetGate(idt, ISR_PF, &_isr_pf, GATE_ISR, KERNEL_CODE_SEGMENT);
 
     InitializeKeyboard();
 

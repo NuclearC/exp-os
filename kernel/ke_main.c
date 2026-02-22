@@ -6,6 +6,7 @@
 
 #include "memory/memory.h"
 #include "memory/paging.h"
+#include "memory/segment.h"
 
 #include "user/elf_loader.h"
 #include "user/exec.h"
@@ -32,20 +33,11 @@ int KAPI KeMain(KernelParams const *params) {
 
     InitializeMemory(params->memory_map, params->image);
     InitializePages();
+    InitializeGDT();
 
     KePrint("Initializing filesystem...\n");
     FsInitialize();
     KePrint("Kernel initialized\n");
-
-    void *test = KeAllocatePhysicalMemory(3000, 4096);
-
-    KeAllocatePageTables(test, 3000, (void *)0x50000000, PAGE_READ_WRITE);
-
-    KePrintBlocks(10);
-
-    *(uint32_t *)(0x50000000) = 1;
-
-    KePrint("wtf %d \n", *(uint32_t *)test);
 
     int ret = 0;
     if ((ret = KeUserExecuteFile("shell"))) {

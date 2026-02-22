@@ -1,10 +1,11 @@
 
 #include "memory.h"
 #include "print.h"
+#include <stdatomic.h>
 
 #define MEMORY_BLOCKS 1024
 static PhysicalMemoryBlock blocks[MEMORY_BLOCKS];
-static size_t block_count = 0;
+static size_t block_count;
 
 int KAPI KeMemoryCopy(void *restrict dest, const void *restrict src,
                       size_t nbytes) {
@@ -50,10 +51,6 @@ void KAPI KeMemoryZero(const void *source, size_t nbytes) {
     KeMemorySet(source, 0, nbytes);
 }
 
-void *KAPI KeVirtualToPhysical(void *virt) {
-    return (void *)((uint32_t)virt + KERNEL_PBASE - KERNEL_VBASE);
-}
-
 void KPRIV InitializeMemory(PhysicalMemoryMap const *memory_map,
                             KernelImage const *kernel_image) {
     KeMemoryZero(blocks, sizeof(blocks));
@@ -63,39 +60,137 @@ void KPRIV InitializeMemory(PhysicalMemoryMap const *memory_map,
         if (entry->type == 1) {
             /* usable memory block */
             if (entry->base_low >= 0x100000 && entry->length_low >= 0x1000000) {
-                blocks[0].base = (void *)(entry->base_low);
-                if (blocks[0].base <= kernel_image->stack_end) {
-                    blocks[0].base = kernel_image->stack_end;
+                blocks[0].begin = entry->base_low;
+                if (blocks[0].begin <= kernel_image->stack_end) {
+                    blocks[0].begin = kernel_image->stack_end;
                 }
-                blocks[0].length = entry->base_low + entry->length_low -
-                                   (size_t)(blocks[0].base);
+                blocks[0].end = entry->base_low + entry->length_low;
             }
         }
     }
-    KePrint("available memory: %x %x \n", blocks[0].base, blocks[0].length);
+    KePrint("available memory: %x %x \n", blocks[0].begin, blocks[0].end);
 }
 
-void KAPI KePrintBlocks(int maxcnt) {
-    for (int i = 0; i < maxcnt; i++) {
-        KePrint("block %d %x:%x \n", i, blocks[i].base,
-                blocks[i].base + blocks[i].length);
+void KAPI KePrintBlocks(size_t maxcnt) {
+    for (size_t i = 0; i < MAX(maxcnt, 1 + block_count); i++) {
+        KePrint("block %d %x:%x \n", i, blocks[i].begin, blocks[i].end);
     }
+}
+
+void KAPI KeDeallocatePhysicalMemory(void *addr) {
+    for (size_t i = 1; i <= block_count; i++) {
+        if (blocks[i].begin == (uintptr_t)addr) {
+
+            for (size_t j = i; j <= block_count - 1; j++) {
+                blocks[j] = blocks[j + 1];
+            }
+
+            blocks[block_count].begin = (blocks[block_count].end = 0);
+            block_count--;
+
+            break;
+        }
+    }
+}
+
+void *KAPI KeAllocateContiguousMemory(size_t *length, size_t align,
+                                      size_t minlength) {
+    int ret = 0;
+    if (block_count >= MEMORY_BLOCKS - 1)
+        return 0;
+    /* walk through memory to find an available block */
+    if (block_count == 0) {
+        blocks[1].begin = ALIGN(blocks[0].begin, align);
+        blocks[1].end = MAX(blocks[0].begin + *length, blocks[0].end);
+        block_count = 1;
+        ret = 1;
+    } else {
+
+        for (size_t i = 1; i <= block_count; i++) {
+            if (i == block_count) {
+                uintptr_t begin = ALIGN(blocks[i].end, align),
+                          end = MAX(begin + *length, blocks[0].end);
+
+                if (end - begin < minlength)
+                    continue;
+                block_count++;
+                blocks[block_count].begin = begin;
+                blocks[block_count].end = end;
+                ret = block_count;
+
+                break;
+            } else {
+                uintptr_t begin = ALIGN(blocks[i].end, align),
+                          end = MAX(begin + *length, blocks[i + 1].begin);
+
+                if (end - begin < minlength)
+                    continue;
+                for (size_t j = block_count + 1; j >= i; j--) {
+                    blocks[j] = blocks[j - 1];
+                }
+                blocks[i].begin = begin;
+                blocks[i].end = end;
+                ret = i;
+                block_count++;
+            }
+        }
+    }
+    if (ret == 0)
+        return 0;
+    KePrint("allocated %d (align %d) bytes at %x:%x \n", length, align,
+            blocks[ret].begin, blocks[ret].end);
+    *length = blocks[ret].end - blocks[ret].begin;
+    return (void *)blocks[ret].begin;
 }
 
 void *KAPI KeAllocatePhysicalMemory(size_t length, size_t align) {
+    int ret = 0;
+    if (block_count >= MEMORY_BLOCKS - 1)
+        return 0;
     /* walk through memory to find an available block */
-    block_count += 1;
-    blocks[block_count].base = blocks[block_count - 1].base;
-    if (block_count > 1) {
-        blocks[block_count].base += blocks[block_count - 1].length;
-    }
-    if ((size_t)blocks[block_count].base % align) {
-        blocks[block_count].base =
-            (void *)(((size_t)blocks[block_count].base / align + 1) * align);
-    }
-    blocks[block_count].length = length;
+    if (block_count == 0) {
+        blocks[1].begin = ALIGN(blocks[0].begin, align);
+        if (blocks[1].begin + length > blocks[0].end) {
+            blocks[1].begin = 0;
+            return 0;
+        }
+        blocks[1].end = blocks[0].begin + length;
 
-    KePrint("allocated %d (align %d) bytes at %x \n", length, align,
-            blocks[block_count].base);
-    return blocks[block_count].base;
+        block_count = 1;
+        ret = 1;
+    } else {
+        for (size_t i = 1; i <= block_count; i++) {
+            if (i == block_count) {
+                uintptr_t begin = ALIGN(blocks[i].end, align),
+                          end = begin + length;
+                if (end <= blocks[0].end) {
+                    block_count++;
+                    blocks[block_count].begin = begin;
+                    blocks[block_count].end = end;
+                    ret = block_count;
+
+                    break;
+                }
+            } else {
+                uintptr_t begin = ALIGN(blocks[i].end, align),
+                          end = begin + length;
+                if (end <= blocks[i + 1].begin && end <= blocks[0].end) {
+                    for (size_t j = block_count + 1; j >= i; j--) {
+                        blocks[j] = blocks[j - 1];
+                    }
+                    blocks[i].begin = begin;
+                    blocks[i].end = end;
+                    ret = i;
+                    block_count++;
+
+                    break;
+                }
+            }
+        }
+    }
+    if (ret == 0)
+        return 0;
+    KePrint("allocated %d (align %d) bytes at %x:%x \n", length, align,
+            blocks[ret].begin, blocks[ret].end);
+    return (void *)blocks[ret].begin;
 }

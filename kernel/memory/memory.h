@@ -20,16 +20,19 @@ typedef struct {
 } PhysicalMemoryMap;
 
 typedef struct {
-    size_t length;
-    void *base;
+    uintptr_t begin;
+    uintptr_t end;
 } PhysicalMemoryBlock;
 
 typedef struct {
-    void *begin;
-    void *end;
-    void *stack_begin;
-    void *stack_end;
+    uintptr_t begin;
+    uintptr_t end;
+    uintptr_t stack_begin;
+    uintptr_t stack_end;
 } KernelImage;
+
+#define ALIGN(x, k) ((x % k) == 0 ? (x) : ((x / k + 1) * k))
+#define MAX(x, y) ((x > y) ? x : y)
 
 void KPRIV InitializeMemory(PhysicalMemoryMap const *memory_map,
                             KernelImage const *kernel_image);
@@ -41,9 +44,11 @@ int KAPI KeMemoryCompare(const void *source1, const void *source2,
 void KAPI KeMemorySet(const void *source, int set, size_t nbytes);
 void KAPI KeMemoryZero(const void *source, size_t nbytes);
 
-void *KAPI KeVirtualToPhysical(void *virt);
-
-void KAPI KePrintBlocks(int maxcnt);
+void KAPI KePrintBlocks(size_t maxcnt);
 void *KAPI KeAllocatePhysicalMemory(size_t length, size_t align);
+void *KAPI KeAllocateContiguousMemory(size_t *length, size_t align,
+                                      size_t minlength);
+
+void KAPI KeDeallocatePhysicalMemory(void *addr);
 
 #endif

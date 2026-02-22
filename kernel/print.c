@@ -2,6 +2,7 @@
 #include "print.h"
 #include "modules/serial/com.h"
 
+#include <ctype.h>
 #include <stdarg.h>
 
 static void KPRIV PrintChar(const char ch) { KeComWrite(0, ch); }
@@ -11,7 +12,7 @@ static void KPRIV PrintInt(uint32_t i) {
     int first = 0;
     while (mx > 0) {
         uint32_t dg = i / mx;
-        if (dg > 0 || first || i < 10) {
+        if (dg > 0 || first || (i < 10 && mx == 1)) {
             char ch = (dg + '0');
             PrintChar(ch);
             first = 1;

@@ -58,6 +58,7 @@ void KPRIV KeLoadPageDirectories(PageDirectoryEntry32 *entry);
 
 void KPRIV KeAllocatePageTables(void *memory, size_t length, void *page,
                                 int flags);
+void KPRIV KeDeallocatePageTables(size_t length, void *page);
 /*
 int KPRIV KeAllocatePageTables(size_t nentries, int flags, void** paddr);
 */

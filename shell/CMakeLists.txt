@@ -4,7 +4,7 @@ enable_language(ASM_NASM)
 
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-file(GLOB_RECURSE ASM_SOURCE_FILES ${PROJECT_SOURCE_DIR}/util/*.asm ${SOURCE_DIR}/*.asm)
+file(GLOB_RECURSE ASM_SOURCE_FILES ${SOURCE_DIR}/*.asm)
 file(GLOB_RECURSE C_SOURCE_FILES ${SOURCE_DIR}/*.c)
 
 set(C_COMPILE_FLAGS -Wall -Wextra -Werror -ffreestanding -nostdlib -fno-builtin -fno-stack-protector -m32)
