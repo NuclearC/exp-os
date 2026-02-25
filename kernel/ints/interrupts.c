@@ -9,7 +9,8 @@
 #include "modules/keyboard/kb.h"
 #include "modules/vga/vga_text.h"
 
-#include "error.h"
+#include "diag/error.h"
+#include "diag/print.h"
 
 InterruptDescriptor32 *idt;
 
@@ -19,8 +20,10 @@ int KAPI _IsrZeroDivide(void) {
         ;
     return 0;
 }
-int KAPI _IsrPFault(void *regs) {
-    KeShowHardError(0, "Page fault", "kernel", regs);
+int KAPI _IsrPFault(PageFaultError *pf) {
+    KeShowHardError(0, "Page fault", "kernel", &pf->regs);
+    KePrint("error code: %x \n", pf->error_code);
+
     while (1)
         ;
     return 0;
@@ -37,6 +40,11 @@ int KAPI _IsrDFault(void *regs) {
     KeShowHardError(0, "Double fault", "kernel", regs);
     while (1)
         ;
+    return 0;
+}
+
+int KAPI _IsrSyscall(void) {
+    VgaTextWrite("usermode syscall \n", 0x04);
     return 0;
 }
 
@@ -67,6 +75,8 @@ int KPRIV InitializeInterrupts(void) {
     SetGate(idt, ISR_GP, &_isr_gp, GATE_ISR, KERNEL_CODE_SEGMENT);
     SetGate(idt, ISR_DF, &_isr_df, GATE_ISR, KERNEL_CODE_SEGMENT);
     SetGate(idt, ISR_PF, &_isr_pf, GATE_ISR, KERNEL_CODE_SEGMENT);
+
+    SetGate(idt, 0x80, &_isr_syscall, GATE_USERMODE_ISR, KERNEL_CODE_SEGMENT);
 
     InitializeKeyboard();
 

@@ -1,7 +1,6 @@
 
 #include "memory.h"
-#include "print.h"
-#include <stdatomic.h>
+#include "diag/print.h"
 
 #define MEMORY_BLOCKS 1024
 static PhysicalMemoryBlock blocks[MEMORY_BLOCKS];

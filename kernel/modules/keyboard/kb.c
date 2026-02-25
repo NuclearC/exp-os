@@ -1,13 +1,12 @@
 
 #include "kb.h"
-#include "kernel/interrupts.h"
-#include "kernel/print.h"
+#include "kernel/diag/print.h"
+#include "kernel/ints/interrupts.h"
 
 extern int _isr_keyboard();
 
 int KAPI _IsrKeyboardHandler(int scancode) {
-    KePrint("keyboard interrupt %d \n", scancode);      
-
+    KePrint("keyboard interrupt %d \n", scancode);
 
     return 0;
 }

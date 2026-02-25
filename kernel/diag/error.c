@@ -1,17 +1,15 @@
 
 #include "error.h"
 
+#include "diag/print.h"
+#include "ke_main.h"
+#include "kernel/ints/interrupts.h"
 #include "modules/vga/vga_io.h"
 #include "typedefs.h"
 
 #define BACK_COL 0x1
 #define ERROR_COL (BACK_COL << 4) | 0xc
 #define INFO_COL (BACK_COL << 4) | 0xf
-
-typedef struct {
-    uint16_t gs, fs, es, ds;
-    uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
-} Registers;
 
 char NibbleToChar(uint8_t n) {
     if (n < 10)
@@ -44,11 +42,10 @@ void WriteReg32(uint32_t r, int row, int col) {
 }
 
 int KAPI KeShowHardError(int, const char *errormsg, const char *whatfailed,
-                         void *regptr) {
+                         Registers *regs) {
     /*   for (int i = 0; i < 80 * 25; i++) {
            VgaWriteString(" ", (i / 80), (i % 80), BACK_COL << 4);
        }*/
-    Registers *regs = (Registers *)regptr;
 
     VgaWriteString("Encountered an unrecoverable error :(", 4, 5, INFO_COL);
     VgaWriteString(errormsg, 5, 5, ERROR_COL);

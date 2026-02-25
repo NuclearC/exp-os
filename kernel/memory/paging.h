@@ -10,12 +10,13 @@
 #define PAGE_SIZE_4M 0x0004
 
 #define PAGE_SIZE 4096
+#define PAGE_ALIGN 4096
 
 #define PAGE_DIR_COUNT 1024
 #define PAGE_TABLE_COUNT 1024
 
 typedef union {
-    struct {
+    struct KPACK {
         uint8_t present : 1;
         uint8_t read_write : 1;
         uint8_t user_access : 1;
@@ -31,7 +32,7 @@ typedef union {
 } PageDirectoryEntry32;
 
 typedef union {
-    struct {
+    struct KPACK {
         uint8_t present : 1;
         uint8_t read_write : 1;
         uint8_t user_access : 1;
@@ -50,15 +51,14 @@ typedef union {
 void KPRIV InitializePages(void);
 
 void KPRIV KeInitializePageDirectories(PageDirectoryEntry32 *entry,
-                                       size_t nentries, int flags);
-
+                                       size_t nentries, uint32_t flags);
 void KPRIV KeInitializePageTables(PageTableEntry32 *entry, size_t nentries,
-                                  void *base_address, int flags);
+                                  uintptr_t base_address, uint32_t flags);
 void KPRIV KeLoadPageDirectories(PageDirectoryEntry32 *entry);
 
-void KPRIV KeAllocatePageTables(void *memory, size_t length, void *page,
-                                int flags);
-void KPRIV KeDeallocatePageTables(size_t length, void *page);
+void KPRIV KeMapPageTables(uintptr_t physical_address, size_t length,
+                           uintptr_t page_address, uint32_t flags);
+void KPRIV KeUnmapPageTables(uintptr_t page_address, size_t length);
 /*
 int KPRIV KeAllocatePageTables(size_t nentries, int flags, void** paddr);
 */

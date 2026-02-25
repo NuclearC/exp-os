@@ -1,7 +1,7 @@
 
 #include "paging.h"
+#include "diag/print.h"
 #include "memory/memory.h"
-#include "print.h"
 
 extern void _mem_pg_load(PageDirectoryEntry32 *dir_table);
 extern void _mem_pg_invld(int wtf);
@@ -9,7 +9,7 @@ extern void _mem_pg_invld(int wtf);
 static PageDirectoryEntry32 *base_directory;
 
 void KPRIV KeInitializePageDirectories(PageDirectoryEntry32 *entry,
-                                       size_t nentries, int flags) {
+                                       size_t nentries, uint32_t flags) {
     for (size_t i = 0; i < nentries; i++) {
         entry[i].bits.present = 1;
         entry[i].bits.read_write = (flags & PAGE_READ_WRITE) ? 1 : 0;
@@ -25,7 +25,7 @@ void KPRIV KeInitializePageDirectories(PageDirectoryEntry32 *entry,
 }
 
 void KPRIV KeInitializePageTables(PageTableEntry32 *entry, size_t nentries,
-                                  void *base_address, int flags) {
+                                  uintptr_t base_address, uint32_t flags) {
     for (size_t i = 0; i < nentries; i++) {
         entry[i].bits.present = 1;
         entry[i].bits.read_write = (flags & PAGE_READ_WRITE) ? 1 : 0;
@@ -39,25 +39,14 @@ void KPRIV KeInitializePageTables(PageTableEntry32 *entry, size_t nentries,
         entry[i].bits.pat = 0;
         entry[i].bits.addr = 0;
 
-        entry[i].wrd |= (uint32_t)base_address;
-        base_address = (void *)((uint32_t)base_address + 4096);
+        entry[i].wrd |= (size_t)base_address;
+        base_address += PAGE_SIZE;
     }
 }
 
 void KPRIV KeLoadPageDirectories(PageDirectoryEntry32 *entry) {
     _mem_pg_load(entry);
 }
-
-/*
-int KPRIV KeAllocatePageTables(size_t nentries, int flags, void** paddr) {
-    size_t cnt = 0;
-    for (size_t i = 1; i < 768; i++) {
-        for (size_t j = 0; j < PAGE_TABLE_COUNT; j++) {
-
-        }
-    }
-}
-*/
 
 void KPRIV InitializePages(void) {
     PageTableEntry32 *base_table, *higher_table;
@@ -84,39 +73,54 @@ void KPRIV InitializePages(void) {
     base_directory[768].wrd |= (size_t)higher_table;
 
     KeInitializePageTables(base_table, PAGE_TABLE_COUNT, 0, PAGE_READ_WRITE);
-    KeInitializePageTables(higher_table, PAGE_TABLE_COUNT, (void *)0x100000,
+    KeInitializePageTables(higher_table, PAGE_TABLE_COUNT, 0x100000,
                            PAGE_READ_WRITE);
     /* load the page directories */
     KeLoadPageDirectories(base_directory);
 }
 
-void KPRIV KeAllocatePageTables(void *memory, size_t length, void *page,
-                                int flags) {
+void KPRIV KeMapPageTables(uintptr_t physical_address, size_t length,
+                           uintptr_t page_address, uint32_t flags) {
     PageTableEntry32 *table;
     for (size_t i = 0; i < length; i += PAGE_SIZE) {
-        size_t addr = (size_t)(page + i);
+        size_t addr = (size_t)(page_address + i);
         size_t dirindex = (addr >> 22) & 1023;
         size_t tableindex = (addr >> 12) & 1023;
-
-        KePrint("probing %x %d %d \n", addr, dirindex, tableindex);
         if (base_directory[dirindex].wrd == 0) {
             KeInitializePageDirectories(&base_directory[dirindex], 1, flags);
+
             table = KeAllocatePhysicalMemory(
-                sizeof(PageTableEntry32) * PAGE_TABLE_COUNT, 4096);
+                sizeof(PageTableEntry32) * PAGE_TABLE_COUNT, PAGE_ALIGN);
 
-            KePrint("allocated pagedir for %x \n", dirindex << 22);
-
-            base_directory[dirindex].wrd |= (size_t)table;
+            KeMemoryZero(table, sizeof(PageTableEntry32) * PAGE_TABLE_COUNT);
+            base_directory[dirindex].wrd |= (uintptr_t)table;
         } else {
             table =
                 (PageTableEntry32 *)(base_directory[dirindex].wrd & 0xfffff000);
-            KePrint("directory exists, proceeding [%x] \n", table);
         }
-        if (table[tableindex].wrd == 0) {
-            KePrint("allocated table for %x \n",
-                    (dirindex << 22) | (tableindex << 12));
-            KeInitializePageTables(&table[tableindex], 1, memory + i, flags);
+        if (1 || table[tableindex].wrd == 0) {
+            KeInitializePageTables(&table[tableindex], 1, physical_address + i,
+                                   flags);
         }
+        _mem_pg_invld(addr);
+    }
+}
+
+void KPRIV KeUnmapPageTables(uintptr_t page_address, size_t length) {
+    PageTableEntry32 *table;
+    for (size_t i = 0; i < length; i += PAGE_SIZE) {
+        size_t addr = (size_t)(page_address + i);
+        size_t dirindex = (addr >> 22) & 1023;
+        size_t tableindex = (addr >> 12) & 1023;
+
+        if (base_directory[dirindex].wrd != 0) {
+            table =
+                (PageTableEntry32 *)(base_directory[dirindex].wrd & 0xfffff000);
+            if (table[tableindex].wrd != 0) {
+                table[tableindex].wrd = 0;
+            }
+        }
+
         _mem_pg_invld(addr);
     }
 }

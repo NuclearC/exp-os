@@ -18,7 +18,7 @@ set(SOURCE_FILES ${ASM_SOURCE_FILES} ${C_SOURCE_FILES})
 
 add_executable(shell ${SOURCE_FILES})
 
-target_link_options(shell PRIVATE ${C_COMPILE_FLAGS})
+target_link_options(shell PRIVATE ${C_COMPILE_FLAGS} -T${LINKER_SCRIPT})
 target_include_directories(shell PRIVATE ${SOURCE_DIR} ${PROJECT_SOURCE_DIR}/ ${PROJECT_SOURCE_DIR}/util/)
 
 set_target_properties(shell PROPERTIES

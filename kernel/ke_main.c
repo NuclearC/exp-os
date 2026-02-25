@@ -1,19 +1,21 @@
 
-#include "memory.h"
-#include "modules/fs/filesystem.h"
-#include "modules/serial/com.h"
-#include "modules/vga/vga_text.h"
+#include "ke_main.h"
 
+#include "diag/print.h"
+
+#include "ints/interrupts.h"
+
+#include "memory.h"
 #include "memory/memory.h"
 #include "memory/paging.h"
 #include "memory/segment.h"
 
+#include "modules/fs/filesystem.h"
+#include "modules/serial/com.h"
+#include "modules/vga/vga_text.h"
+
 #include "user/elf_loader.h"
 #include "user/exec.h"
-
-#include "interrupts.h"
-#include "ke_main.h"
-#include "print.h"
 
 typedef struct {
     PhysicalMemoryMap *memory_map;
@@ -24,8 +26,10 @@ typedef struct {
  *
  */
 int KAPI KeMain(KernelParams const *params) {
+
     InitializeInterrupts();
     InitializeCom(0);
+
     VgaTextClear();
     VgaTextWrite("Hello world\n", 0x02);
 

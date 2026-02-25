@@ -13,10 +13,10 @@ static void InitializeDescriptor(SegmentDescriptor *desc, uintptr_t limit,
                                  uintptr_t base) {
     desc->present = 1;
     desc->accessed = 0;
-    desc->limit_low = limit & 0xffff;
+    desc->limit_low = limit;
     desc->limit_high = (limit >> 16) & 0xf;
 
-    desc->base_low = base & 0xfffff;
+    desc->base_low = base;
     desc->base_high = (base >> 24) & 0xff;
 }
 
@@ -37,7 +37,7 @@ static void InitializeTSS(SegmentDescriptor *desc) {
     desc->gran = 0;
 
     tss.ss0 = KERNEL_DATA_SEGMENT;
-    tss.esp0 = KERNEL_STACK_BASE;
+    tss.esp0 = KERNEL_STACK_BASE + 0x10000; /* todo: xd */
 }
 
 void KPRIV InitializeGDT(void) {

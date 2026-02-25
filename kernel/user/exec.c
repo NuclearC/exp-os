@@ -2,13 +2,15 @@
 
 #include "exec.h"
 #include "elf_loader.h"
-#include "kernel/print.h"
+#include "kernel/diag/print.h"
 #include "memory/memory.h"
 #include "memory/paging.h"
 #include "modules/fs/filesystem.h"
 
-int KAPI KeUserExecuteFile(const char *filename) {
+extern void _user_jmp(uintptr_t addr, uintptr_t stack_top);
 
+int KAPI KeUserExecuteFile(const char *filename) {
+    /* find and load the ELF file from the filename */
     int fileindex = FsFindFile(filename);
 
     if (fileindex == -1) {
@@ -24,8 +26,8 @@ int KAPI KeUserExecuteFile(const char *filename) {
     if (KeCheckElfHeader(&elf_header)) {
         return USER_EXEC_HDR_INVALID;
     }
-
-    void *base = (void *)0x50000000;
+    /* no specific reason */
+    uintptr_t image_base = 0x5f000000;
 
     Elf32_Phdr program_header;
     for (int i = 0; i < elf_header.e_phnum; i++) {
@@ -37,14 +39,30 @@ int KAPI KeUserExecuteFile(const char *filename) {
             KePrint("loadable section %x %x %x \n", program_header.p_vaddr,
                     program_header.p_paddr, program_header.p_memsz);
 
-            void *pbase = base + program_header.p_vaddr;
-            void *ptr = KeAllocatePhysicalMemory(program_header.p_memsz, 4096);
-            KeAllocatePageTables(ptr, program_header.p_memsz, pbase,
-                                 PAGE_ACCESS_ALL | PAGE_READ_WRITE);
-            FsReadBytes(handle, program_header.p_offset, pbase,
+            uintptr_t ph_vbase = image_base + program_header.p_vaddr;
+            uintptr_t ph_memory = (uintptr_t)KeAllocatePhysicalMemory(
+                program_header.p_memsz, PAGE_ALIGN);
+
+            int page_flags = PAGE_ACCESS_ALL | PAGE_READ_WRITE;
+
+            KeMapPageTables(ph_memory, program_header.p_memsz, ph_vbase,
+                            page_flags);
+            FsReadBytes(handle, program_header.p_offset, (void *)ph_vbase,
                         program_header.p_filesz);
         }
     }
+
+    const size_t user_stack_size = 0x10000;
+    uintptr_t stack_top = image_base - 0x1000;
+    uintptr_t image_stack =
+        (uintptr_t)KeAllocatePhysicalMemory(user_stack_size, PAGE_ALIGN);
+    KeMapPageTables(image_stack, user_stack_size, stack_top - user_stack_size,
+                    PAGE_ACCESS_ALL | PAGE_READ_WRITE);
+
+    uintptr_t entry = image_base + elf_header.e_entry;
+    KePrint("usermode jump to %x \n", entry);
+    /* perform the usermode jump */
+    _user_jmp(entry, stack_top);
 
     return 0;
 }

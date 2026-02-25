@@ -2,10 +2,10 @@
 
 #include "filesystem.h"
 #include "ke_main.h"
-#include "memory.h"
+#include "memory/memory.h"
 #include "typedefs.h"
 
-#include "print.h"
+#include "diag/print.h"
 
 extern int _s_strcmp(const char *s1, const char *s2);
 extern int _io_read_sector(char *buf, int sector, int numsectors);
