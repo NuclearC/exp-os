@@ -1,13 +1,13 @@
 
 
 #include "exec.h"
-#include "elf_loader.h"
+#include "elf/elf_loader.h"
 #include "kernel/diag/print.h"
 #include "memory/memory.h"
 #include "memory/paging.h"
 #include "modules/fs/filesystem.h"
 
-extern void _user_jmp(uintptr_t addr, uintptr_t stack_top);
+extern void KNORETURN _user_jmp(uintptr_t addr, uintptr_t stack_top);
 
 int KAPI KeUserExecuteFile(const char *filename) {
     /* find and load the ELF file from the filename */
@@ -49,6 +49,11 @@ int KAPI KeUserExecuteFile(const char *filename) {
                             page_flags);
             FsReadBytes(handle, program_header.p_offset, (void *)ph_vbase,
                         program_header.p_filesz);
+        } else if (program_header.p_type == PT_DYNAMIC) {
+            KePrint("dynamic section %x %x %x \n", program_header.p_vaddr,
+                    program_header.p_paddr, program_header.p_memsz);
+
+            KeDynamicLink(image_base, &program_header);
         }
     }
 
@@ -62,9 +67,9 @@ int KAPI KeUserExecuteFile(const char *filename) {
     uintptr_t entry = image_base + elf_header.e_entry;
     KePrint("usermode jump to %x \n", entry);
     /* perform the usermode jump */
-    _user_jmp(entry, stack_top);
-
-    return 0;
+    KeUserJump(entry, stack_top);
 }
 
-int KAPI KeUserExecute() { return 0; }
+void KNORETURN KAPI KeUserJump(uintptr_t addr, uintptr_t stack_top) {
+    _user_jmp(addr, stack_top);
+}

@@ -76,13 +76,4 @@ _isr_df:
         hlt
         jmp .loop 
 
-global _isr_syscall
-_isr_syscall:
-    int_begin
-    push esp
-    extern _IsrSyscall
-    call _IsrSyscall
-    add esp, 4
-    int_end
-    iret
 

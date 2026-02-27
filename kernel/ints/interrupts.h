@@ -58,8 +58,10 @@ typedef struct KPACK {
 
 #define ISR_PIC_BASE 0x20
 
-int KPRIV InitializeInterrupts(void);
+void KPRIV InitializeInterrupts(void);
+void KPRIV EnableInterrupts(void);
 
-int KAPI KeSetupIRQ(int index, void *ptr);
+void KAPI KeSetupIRQ(int index, void *ptr);
+void KAPI KeSetupUserISR(int index, void *ptr);
 
 #endif

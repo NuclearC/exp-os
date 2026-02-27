@@ -43,9 +43,9 @@ void WriteReg32(uint32_t r, int row, int col) {
 
 int KAPI KeShowHardError(int, const char *errormsg, const char *whatfailed,
                          Registers *regs) {
-    /*   for (int i = 0; i < 80 * 25; i++) {
-           VgaWriteString(" ", (i / 80), (i % 80), BACK_COL << 4);
-       }*/
+    for (int i = 0; i < 80 * 25; i++) {
+        VgaWriteString(" ", (i / 80), (i % 80), BACK_COL << 4);
+    }
 
     VgaWriteString("Encountered an unrecoverable error :(", 4, 5, INFO_COL);
     VgaWriteString(errormsg, 5, 5, ERROR_COL);

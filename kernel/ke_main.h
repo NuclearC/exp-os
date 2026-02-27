@@ -7,6 +7,7 @@
 #define KPRIV
 #define KPACK __attribute__((packed))
 #define KALIGN(x) __attribute__((aligned(x)))
+#define KNORETURN __attribute__((noreturn))
 
 #define KERNEL_PBASE 0x100000
 #define KERNEL_VBASE 0xc0000000

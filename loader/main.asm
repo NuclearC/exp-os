@@ -70,7 +70,16 @@ clear_pipe: ;
     ; now we are in the protected mode, we can load the necessary module
     jmp ldr_entry
 ; Protected Mode entry point
-ldr_entry:  
+ldr_entry: 
+    ; clear the screen
+    call _v_clear
+    push 0x07
+    push 0
+    push 0
+    push init_str
+    call _v_print
+    add esp, 4
+
     ; allocate 512 bytes for the sector
     sub esp, 512
     mov edi, esp ; save destination address    
@@ -219,6 +228,7 @@ error:
         hlt
         jmp .loop
 
+
 %include "disk_io.asm"
 %include "v_io.asm"
 %include "elf_ldr.asm"
@@ -290,6 +300,9 @@ gdt_desc:
     dw gdt_end - gdt - 1
     dd gdt
 
-kernel_str db "kernel", 0
-interrupt_st db "unhandled interrupt", 0
-error_str db "Failed to load the kernel -- ", 0
+kernel_str: db "kernel", 0
+interrupt_st: db "unhandled interrupt", 0
+error_str: db "Failed to load the kernel -- ", 0
+
+init_str: db "Initializing the OS loader...", 0
+

@@ -5,14 +5,17 @@
 #include "isr.h"
 #include "pic_st.h"
 
+#include "memory/memory.h"
 #include "memory/segment.h"
 #include "modules/keyboard/kb.h"
 #include "modules/vga/vga_text.h"
+#include "user/syscall.h"
 
 #include "diag/error.h"
 #include "diag/print.h"
 
-InterruptDescriptor32 *idt;
+static InterruptDescriptor32 table[256];
+static InterruptDescriptorTable idt;
 
 int KAPI _IsrZeroDivide(void) {
     VgaTextWrite("Zero Divison error\n", 7);
@@ -23,7 +26,6 @@ int KAPI _IsrZeroDivide(void) {
 int KAPI _IsrPFault(PageFaultError *pf) {
     KeShowHardError(0, "Page fault", "kernel", &pf->regs);
     KePrint("error code: %x \n", pf->error_code);
-
     while (1)
         ;
     return 0;
@@ -43,13 +45,7 @@ int KAPI _IsrDFault(void *regs) {
     return 0;
 }
 
-int KAPI _IsrSyscall(void) {
-    VgaTextWrite("usermode syscall \n", 0x04);
-    return 0;
-}
-
-void KPRIV SetGate(InterruptDescriptor32 *table, int index, void *ptr, int type,
-                   int selector) {
+void KPRIV SetGate(int index, void *ptr, int type, int selector) {
 
     index = index & 0xff;
 
@@ -60,32 +56,35 @@ void KPRIV SetGate(InterruptDescriptor32 *table, int index, void *ptr, int type,
     table[index].selector = selector;
 }
 
-int KAPI KeSetupIRQ(int index, void *ptr) {
-    if (index > 16)
-        return 1;
-    SetGate(idt, ISR_PIC_BASE + index, ptr, GATE_ISR, KERNEL_CODE_SEGMENT);
-
-    return 0;
+void KAPI KeSetupIRQ(int index, void *ptr) {
+    if (index <= 16)
+        SetGate(ISR_PIC_BASE + index, ptr, GATE_ISR, KERNEL_CODE_SEGMENT);
+}
+void KAPI KeSetupUserISR(int index, void *ptr) {
+    SetGate(index, ptr, GATE_USERMODE_ISR, KERNEL_CODE_SEGMENT);
 }
 
-int KPRIV InitializeInterrupts(void) {
-    idt = (InterruptDescriptor32 *)_idt_addr();
+void KPRIV InitializeInterrupts(void) {
+    KeMemoryZero(table, sizeof(table));
 
-    SetGate(idt, ISR_DE, &_isr_zero_divide, GATE_ISR, KERNEL_CODE_SEGMENT);
-    SetGate(idt, ISR_GP, &_isr_gp, GATE_ISR, KERNEL_CODE_SEGMENT);
-    SetGate(idt, ISR_DF, &_isr_df, GATE_ISR, KERNEL_CODE_SEGMENT);
-    SetGate(idt, ISR_PF, &_isr_pf, GATE_ISR, KERNEL_CODE_SEGMENT);
-
-    SetGate(idt, 0x80, &_isr_syscall, GATE_USERMODE_ISR, KERNEL_CODE_SEGMENT);
+    SetGate(ISR_DE, &_isr_zero_divide, GATE_ISR, KERNEL_CODE_SEGMENT);
+    SetGate(ISR_GP, &_isr_gp, GATE_ISR, KERNEL_CODE_SEGMENT);
+    SetGate(ISR_DF, &_isr_df, GATE_ISR, KERNEL_CODE_SEGMENT);
+    SetGate(ISR_PF, &_isr_pf, GATE_ISR, KERNEL_CODE_SEGMENT);
 
     InitializeKeyboard();
+    InitializeSyscalls();
 
-    _idt_setup();
+    idt.descriptors = table;
+    idt.sz = sizeof(table);
+
+    _idt_setup(&idt);
     _pic_setup();
     /* enable keyboard interrupt */
     _pic_setmask(0xffff & (~2));
+}
 
+void KPRIV EnableInterrupts() {
     /* enable interrupts finally */
     _idt_enable();
-    return 0;
 }

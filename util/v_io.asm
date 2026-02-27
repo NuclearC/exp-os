@@ -78,6 +78,7 @@ _v_print:
     leave
     ret
 
+
 ; SUBROUTINE - print a character on the screen
 ; parameters: the char
 ;             thr row

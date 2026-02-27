@@ -5,7 +5,7 @@
 #include "ke_main.h"
 #include "typedefs.h"
 typedef struct KPACK {
-    uint16_t gs, fs, es, ds;
+    uint32_t gs, fs, es, ds;
 
     uint32_t edi;
     uint32_t esi;

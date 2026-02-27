@@ -14,7 +14,6 @@
 #include "modules/serial/com.h"
 #include "modules/vga/vga_text.h"
 
-#include "user/elf_loader.h"
 #include "user/exec.h"
 
 typedef struct {
@@ -26,12 +25,8 @@ typedef struct {
  *
  */
 int KAPI KeMain(KernelParams const *params) {
-
     InitializeInterrupts();
     InitializeCom(0);
-
-    VgaTextClear();
-    VgaTextWrite("Hello world\n", 0x02);
 
     KePrint("Initializing memory & paging...\n");
 
@@ -39,9 +34,14 @@ int KAPI KeMain(KernelParams const *params) {
     InitializePages();
     InitializeGDT();
 
+    /* enable the interrupts */
+    EnableInterrupts();
+
     KePrint("Initializing filesystem...\n");
     FsInitialize();
     KePrint("Kernel initialized\n");
+
+    VgaTextClear();
 
     int ret = 0;
     if ((ret = KeUserExecuteFile("shell"))) {
