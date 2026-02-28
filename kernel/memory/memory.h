@@ -31,6 +31,8 @@ typedef struct {
     uintptr_t stack_end;
 } KernelImage;
 
+#define MEM_ALIGN sizeof(uintptr_t)
+
 #define ALIGN(x, k) ((x % k) == 0 ? (x) : ((x / k + 1) * k))
 #define MAX(x, y) ((x > y) ? x : y)
 
@@ -41,14 +43,16 @@ int KAPI KeMemoryCopy(void *restrict dest, const void *restrict src,
                       size_t nbytes);
 int KAPI KeMemoryCompare(const void *source1, const void *source2,
                          size_t nbytes);
-void KAPI KeMemorySet(const void *source, int set, size_t nbytes);
-void KAPI KeMemoryZero(const void *source, size_t nbytes);
+void KAPI KeMemorySet(void *dest, int set, size_t nbytes);
+void KAPI KeMemoryZero(void *dest, size_t nbytes);
 
 void KAPI KePrintBlocks(size_t maxcnt);
 void *KAPI KeAllocatePhysicalMemory(size_t length, size_t align);
+int KAPI KeTryReallocatePhysicalMemory(const void *oldmemory,
+                                       size_t new_length);
 void *KAPI KeAllocateContiguousMemory(size_t *length, size_t align,
                                       size_t minlength);
 
-void KAPI KeDeallocatePhysicalMemory(void *addr);
+void KAPI KeDeallocatePhysicalMemory(const void *addr);
 
 #endif

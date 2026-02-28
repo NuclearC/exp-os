@@ -5,14 +5,14 @@
 
 #include "ints/interrupts.h"
 
-#include "memory.h"
 #include "memory/memory.h"
 #include "memory/paging.h"
 #include "memory/segment.h"
-
 #include "modules/fs/filesystem.h"
 #include "modules/serial/com.h"
 #include "modules/vga/vga_text.h"
+#include "objects/io_object.h"
+#include "objects/object.h"
 
 #include "user/exec.h"
 
@@ -25,6 +25,8 @@ typedef struct {
  *
  */
 int KAPI KeMain(KernelParams const *params) {
+    VgaTextClear();
+
     InitializeInterrupts();
     InitializeCom(0);
 
@@ -39,9 +41,15 @@ int KAPI KeMain(KernelParams const *params) {
 
     KePrint("Initializing filesystem...\n");
     FsInitialize();
-    KePrint("Kernel initialized\n");
 
-    VgaTextClear();
+    KePrint("Initializing objects...\n");
+    InitializeObjects();
+    InitializeIoObjects();
+
+    KIoObjectHandle stdio;
+    KeCreateIoObject(&stdio);
+
+    KePrint("Kernel initialized\n");
 
     int ret = 0;
     if ((ret = KeUserExecuteFile("shell"))) {

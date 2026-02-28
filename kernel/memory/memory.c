@@ -36,18 +36,18 @@ int KAPI KeMemoryCompare(const void *source1, const void *source2,
     return 0;
 }
 
-void KAPI KeMemorySet(const void *source, int set, size_t nbytes) {
+void KAPI KeMemorySet(void *dest, int set, size_t nbytes) {
     const size_t ndwords = nbytes / 4;
     for (size_t i = 0; i < ndwords; ++i) {
-        *((uint32_t *)source + i) = set;
+        *((uint32_t *)dest + i) = set;
     }
     for (size_t i = 0; i < (nbytes & 3); ++i) {
-        *((uint8_t *)source + ndwords * 4 + i) = (set >> (8 * i)) & 0xff;
+        *((uint8_t *)dest + ndwords * 4 + i) = (set >> (8 * i)) & 0xff;
     }
 }
 
-void KAPI KeMemoryZero(const void *source, size_t nbytes) {
-    KeMemorySet(source, 0, nbytes);
+void KAPI KeMemoryZero(void *dest, size_t nbytes) {
+    KeMemorySet(dest, 0, nbytes);
 }
 
 void KPRIV InitializeMemory(PhysicalMemoryMap const *memory_map,
@@ -76,7 +76,7 @@ void KAPI KePrintBlocks(size_t maxcnt) {
     }
 }
 
-void KAPI KeDeallocatePhysicalMemory(void *addr) {
+void KAPI KeDeallocatePhysicalMemory(const void *addr) {
     for (size_t i = 1; i <= block_count; i++) {
         if (blocks[i].begin == (uintptr_t)addr) {
 
@@ -90,6 +90,25 @@ void KAPI KeDeallocatePhysicalMemory(void *addr) {
             break;
         }
     }
+}
+
+int KAPI KeTryReallocatePhysicalMemory(const void *oldmemory,
+                                       size_t new_length) {
+    for (size_t i = 1; i <= block_count; i++) {
+        if (blocks[i].begin == (uintptr_t)oldmemory) {
+            uintptr_t endlimit = blocks[0].end;
+            if (i != block_count) {
+                endlimit = blocks[i + 1].begin;
+            }
+            if (blocks[i].begin + new_length <= endlimit) {
+                blocks[i].end = blocks[i].begin + new_length;
+                return 0;
+            } else {
+                return 1;
+            }
+        }
+    }
+    return 1;
 }
 
 void *KAPI KeAllocateContiguousMemory(size_t *length, size_t align,

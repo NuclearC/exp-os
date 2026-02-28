@@ -34,7 +34,7 @@ boot_scnd:
      
         push dx
         push cx
-        add bx, 4 ; pointer += 4 
+        add bx, 6 ; pointer += 6
       
         mov si, boot_loader ; filename
         mov di, bx          ; the pointer
@@ -51,7 +51,7 @@ boot_scnd:
             jz .end_str ; jump if string terminated
             jmp .loop2
         .cmp_uneq:
-            add bx, 12
+            add bx, 10
             add sp, 4
             jmp .loop
         .end_str:

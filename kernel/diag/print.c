@@ -1,11 +1,14 @@
 
 #include "print.h"
 #include "modules/serial/com.h"
+#include "modules/vga/vga_text.h"
 
-#include <ctype.h>
 #include <stdarg.h>
 
-static void KPRIV PrintChar(const char ch) { KeComWrite(0, ch); }
+static void KPRIV PrintChar(const char ch) {
+    VgaTextWriteChar(ch, 0x07);
+    KeComWrite(0, ch);
+}
 
 static void KPRIV PrintInt(uint32_t i) {
     uint32_t mx = 1000000000;
@@ -47,6 +50,11 @@ int KAPI KePrint(const char *string, ...) {
                         ch = (ch - 10) + 'A';
                     PrintChar(ch);
                 }
+            } break;
+            case 's': {
+                const char *s = va_arg(args, const char *);
+                while (*s != 0)
+                    PrintChar(*(s++));
             } break;
             }
 

@@ -203,22 +203,22 @@ _io_find_file:
     
     .loop:  
         ; the format:
-        ; | SECTOR uint16 | LEN uint16 | name 12 bytes |
+        ; | SECTOR uint16 | LEN uint32 | name 10 bytes |
         mov ax, [ebx]
-        mov dx, [ebx + 2]
+        mov edx, [ebx + 2]
 
-        test dx, dx
+        test edx, edx
         jz .exit ; len is 0, exit
         
         push eax
         push edx ; store the length
-        add ebx, 4 ; p += 4
+        add ebx, 6 ; p += 6 
         push edi
         push ebx
         call _s_strcmp
         add esp, 8 ; clean the stack
 
-        add ebx, 12 ; p += 12
+        add ebx, 10 ; p += 10
         test eax, eax ; the return value
         pop edx
         pop eax ; restore the sector

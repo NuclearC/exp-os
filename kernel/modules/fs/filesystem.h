@@ -7,8 +7,8 @@
 
 typedef struct KPACK {
     uint16_t sector;
-    uint16_t length;
-    char name[12];
+    uint32_t length;
+    char name[10];
 } FileTableEntry;
 
 typedef FileTableEntry *FileHandle;

@@ -2,7 +2,7 @@ import sys
 import struct
 import os
 
-nsectors = 512 # 128kb 
+nsectors = 512 
 buf = bytearray(nsectors * 512) 
 used = [0] * nsectors
 used[1] = 1
@@ -54,11 +54,11 @@ def write_file_table():
     for i in filelist:
         struct.pack_into('<H', buf, off, i[1])
         off += 2
-        struct.pack_into('<H', buf, off, i[2])
-        off += 2
-        namelen = min(12, len(i[0]))
+        struct.pack_into('<I', buf, off, i[2])
+        off += 4
+        namelen = min(10, len(i[0]))
         buf[off: off + namelen] = i[0].encode('utf-8')[0:namelen]
-        off += 12
+        off += 10
 
 out = "bootimage"
 i = 1
