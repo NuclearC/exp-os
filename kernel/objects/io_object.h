@@ -43,4 +43,6 @@ size_t KAPI KeReadIoObject(KIoObjectHandle io_object, int buffer_index,
                            char *data, size_t max_length);
 size_t KAPI KeReadIoBuffer(KIoBuffer *buffer, char *data, size_t max_length);
 
+void KAPI DestroyIoObjects(void);
+
 #endif

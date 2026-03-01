@@ -21,4 +21,6 @@ void KAPI InitializeObjects(void);
 int KAPI KeCreateObject(KObjectHandle *object, const char *name);
 void KAPI KeDestroyObject(const KObjectHandle object);
 
+void KAPI DestroyObjects(void);
+
 #endif

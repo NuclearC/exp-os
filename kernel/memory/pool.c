@@ -12,7 +12,7 @@ int KAPI KeCreatePool(KPool *pool, size_t size) {
     return 0;
 }
 
-void *KAPI KeTryAcquire(KPool *pool, size_t element_size) {
+void *KAPI KeTryAcquire(const KPool *pool, size_t element_size) {
     for (size_t i = 0; i < pool->length; i += element_size) {
         uintptr_t b = *(uintptr_t *)(pool->data + i);
 
@@ -29,7 +29,7 @@ void KAPI KeDestroyPool(KPool const *pool) {
         KeDeallocatePhysicalMemory(pool->data);
     }
 }
-int KAPI KeHasPool(KPool *pool, const void *object) {
+int KAPI KeHasPool(KPool const *pool, const void *object) {
     return (pool != 0) &&
            (object >= pool->data && object <= pool->data + pool->length);
 }

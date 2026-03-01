@@ -13,7 +13,8 @@
 #include "modules/vga/vga_text.h"
 #include "objects/io_object.h"
 #include "objects/object.h"
-
+#include "tasks/task.h"
+#include "user/env.h"
 #include "user/exec.h"
 
 typedef struct {
@@ -45,9 +46,10 @@ int KAPI KeMain(KernelParams const *params) {
     KePrint("Initializing objects...\n");
     InitializeObjects();
     InitializeIoObjects();
+    InitializeTasks();
 
-    KIoObjectHandle stdio;
-    KeCreateIoObject(&stdio);
+    KePrint("Initializing the environment...\n");
+    InitializeGlobalEnvironment();
 
     KePrint("Kernel initialized\n");
 

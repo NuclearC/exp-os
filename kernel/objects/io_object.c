@@ -2,13 +2,24 @@
 
 #include "io_object.h"
 #include "memory/memory.h"
-#include "pool.h"
+#include "memory/pool.h"
 
 static KPool io_object_pool;
 
 void KAPI InitializeIoObjects(void) {
     KeCreatePool(&io_object_pool, MAX_OBJECTS * sizeof(KIoObject));
 }
+
+void KAPI DestroyIoObjects(void) {
+    KeDestroyPool(&io_object_pool);
+    for (size_t i = 0; i < MAX_OBJECTS; i++) {
+        KIoObject *obj = (KIoObject *)io_object_pool.data + i;
+        if (obj->object_handle != 0) {
+            KeDestroyIoObject(obj);
+        }
+    }
+}
+
 int KAPI KeCreateIoObject(KIoObjectHandle *io_object) {
     KObjectHandle obj_handle = KOBJECT_HANDLE_NULL;
 
@@ -31,7 +42,7 @@ int KAPI KeCreateIoObject(KIoObjectHandle *io_object) {
 
 void KAPI KeDestroyIoObject(KIoObjectHandle io_object) {
     KeDestroyObject(io_object->object_handle);
-
+    io_object->object_handle = 0;
     for (int i = 0; i < IO_NUM_BUFFERS; i++) {
         KeDestroyIoBuffer(&io_object->io_buffers[i]);
     }

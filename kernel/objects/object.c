@@ -3,7 +3,7 @@
 #include "object.h"
 #include "diag/print.h"
 #include "memory/memory.h"
-#include "pool.h"
+#include "memory/pool.h"
 
 static uintptr_t object_counter;
 static KPool object_pool;
@@ -34,4 +34,15 @@ void KAPI KeDestroyObject(const KObjectHandle object) {
         object->handle = 0;
         KeDestroyString(&object->name);
     }
+}
+
+void KAPI DestroyObjects(void) {
+    for (size_t i = 0; i < MAX_OBJECTS; i++) {
+        KObject *obj = (KObject *)object_pool.data + i;
+        if (obj->handle != 0) {
+            KeDestroyObject(obj);
+        }
+    }
+    KeDestroyPool(&object_pool);
+    object_counter = 0;
 }

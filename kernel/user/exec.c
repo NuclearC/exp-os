@@ -6,6 +6,7 @@
 #include "memory/memory.h"
 #include "memory/paging.h"
 #include "modules/fs/filesystem.h"
+#include "tasks/task.h"
 
 extern void KNORETURN _user_jmp(uintptr_t addr, uintptr_t stack_top);
 
@@ -29,6 +30,9 @@ int KAPI KeUserExecuteFile(const char *filename) {
     /* no specific reason */
     uintptr_t image_base = 0x5f000000;
 
+    int task_image_counter = 0;
+    KTaskImage task_image[MAX_TASK_IMAGES];
+
     Elf32_Phdr program_header;
     for (int i = 0; i < elf_header.e_phnum; i++) {
         FsReadBytes(handle, elf_header.e_phoff + i * elf_header.e_phentsize,
@@ -43,12 +47,21 @@ int KAPI KeUserExecuteFile(const char *filename) {
             uintptr_t ph_memory = (uintptr_t)KeAllocatePhysicalMemory(
                 program_header.p_memsz, PAGE_ALIGN);
 
-            int page_flags = PAGE_ACCESS_ALL | PAGE_READ_WRITE;
+            int page_flags = PAGE_ACCESS_ALL;
+            if (program_header.p_flags & PF_W)
+                page_flags |= PAGE_READ_WRITE;
 
             KeMapPageTables(ph_memory, program_header.p_memsz, ph_vbase,
                             page_flags);
             FsReadBytes(handle, program_header.p_offset, (void *)ph_vbase,
                         program_header.p_filesz);
+
+            task_image[task_image_counter].begin = ph_vbase;
+            task_image[task_image_counter].end =
+                ph_vbase + program_header.p_memsz;
+
+            task_image_counter++;
+
         } else if (program_header.p_type == PT_DYNAMIC) {
             KePrint("dynamic section %x %x %x \n", program_header.p_vaddr,
                     program_header.p_paddr, program_header.p_memsz);
@@ -66,6 +79,9 @@ int KAPI KeUserExecuteFile(const char *filename) {
 
     uintptr_t entry = image_base + elf_header.e_entry;
     KePrint("usermode jump to %x \n", entry);
+    KTaskHandle task_handle;
+    KeCreateTask(&task_handle, task_image, task_image_counter, entry,
+                 stack_top);
     /* perform the usermode jump */
     KeUserJump(entry, stack_top);
 }
