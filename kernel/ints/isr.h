@@ -7,4 +7,6 @@ extern int _isr_gp();
 extern int _isr_df();
 extern int _isr_pf();
 
+extern int _irq_timer();
+
 #endif

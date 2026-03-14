@@ -76,4 +76,15 @@ _isr_df:
         hlt
         jmp .loop 
 
+global _irq_timer
+_irq_timer:
+    int_begin
+
+    extern _IrqTimer
+    call _IrqTimer
+    call _pic_int_end
+    int_end
+    iret
+
+
 

@@ -32,6 +32,8 @@ int KAPI KeCreateTask(KTaskHandle *task, const KTaskImage *image,
                       uintptr_t stack_top);
 void KAPI KeDestroyTask(KTaskHandle task);
 
+size_t KAPI KeEnumerateTasks(KTaskHandle *tasks, size_t max_length);
+
 void KAPI DestroyTasks(void);
 
 #endif

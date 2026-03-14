@@ -1,6 +1,5 @@
 
 
-
 set(CMAKE_ASM_NASM_OBJECT_FORMAT bin)
 
 enable_language(ASM_NASM)

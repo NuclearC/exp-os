@@ -13,6 +13,7 @@
 #include "modules/vga/vga_text.h"
 #include "objects/io_object.h"
 #include "objects/object.h"
+#include "tasks/scheduler.h"
 #include "tasks/task.h"
 #include "user/env.h"
 #include "user/exec.h"
@@ -47,6 +48,7 @@ int KAPI KeMain(KernelParams const *params) {
     InitializeObjects();
     InitializeIoObjects();
     InitializeTasks();
+    InitializeScheduler();
 
     KePrint("Initializing the environment...\n");
     InitializeGlobalEnvironment();
@@ -64,5 +66,10 @@ int KAPI KeMain(KernelParams const *params) {
 
         KePrint("next line...\n");
     }
+
+    DestroyTasks();
+    DestroyIoObjects();
+    DestroyObjects();
+
     return 0;
 }

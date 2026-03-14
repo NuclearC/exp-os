@@ -9,6 +9,7 @@
 #include "memory/segment.h"
 #include "modules/keyboard/kb.h"
 #include "modules/vga/vga_text.h"
+#include "tasks/scheduler.h"
 #include "user/syscall.h"
 
 #include "diag/error.h"
@@ -16,6 +17,11 @@
 
 static InterruptDescriptor32 table[256];
 static InterruptDescriptorTable idt;
+
+int KAPI _IrqTimer(void) {
+    DoSchedule();
+    return 0;
+}
 
 int KAPI _IsrZeroDivide(void) {
     VgaTextWrite("Zero Divison error\n", 7);
@@ -75,13 +81,16 @@ void KPRIV InitializeInterrupts(void) {
     InitializeKeyboard();
     InitializeSyscalls();
 
+    /* the almighty timer interrupt */
+    KeSetupIRQ(0, &_irq_timer);
+
     idt.descriptors = table;
     idt.sz = sizeof(table);
 
     _idt_setup(&idt);
     _pic_setup();
     /* enable keyboard interrupt */
-    _pic_setmask(0xffff & (~2));
+    _pic_setmask(0xffff & (~3));
 }
 
 void KPRIV EnableInterrupts() {
