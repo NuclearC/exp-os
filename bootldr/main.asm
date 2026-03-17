@@ -220,7 +220,8 @@ ldr_entry:
     add rdx, 511
     shr rdx, 9 ; ceil divide
     call _io_read_sector
-    
+   
+    mov rdi, memory_map 
     jmp OSLDR_BASE 
      
 

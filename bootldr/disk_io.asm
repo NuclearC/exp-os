@@ -25,6 +25,12 @@ CMD_READ        equ 0x21
 _io_read_init:
     push rbp
     mov rbp, rsp
+    
+    mov rdx, ATA1 + ATA_STAT
+    .busy_check:
+        in al, dx
+        test al, 0x80 ; BSY
+        jnz .busy_check
 
     mov dx, ATA1 + ATA_DRHD ; drive and head port
     mov eax, ebx
@@ -115,10 +121,10 @@ _io_read_bytes:
     mov rbx, rsi
     call _io_read_init
     
-    mov rbx, r8 ; number of bytes
-    mov rcx, r9 ; offset within sector
+    shr r8, 1 ; number of words to read
+    shr r9, 1 ; number of words to skip
 
-    xor r9, r9
+    xor rbx, rbx ; return value
     .read_sector_loop:
         mov rdx, ATA1 + ATA_STAT
         .busy_check:
@@ -129,31 +135,28 @@ _io_read_bytes:
             jz .busy_check
        
         mov rdx, ATA1 + ATA_DATA
-        mov r8, rbx
-        shr r8, 1 ; number of words to read
+        mov rcx, 256
+        .read_word_loop:
+            in ax, dx ; read the word
+            
+            cmp rbx, r8 ; nothing left to read
+            jae .skip
+                
+            test r9, r9 ; we gotta skip
+            jz .read
+            dec r9
+            loop .read_word_loop
 
-        test rcx, rcx
-        jz .read ; nothing to skip
+            .read:
+            mov [rdi + 2* rbx], ax ; write to mem location
+            inc rbx ; read bytes += 2
 
-            shr rcx, 1 ; number of words
-            sub r8, rcx ; we have less to read from this sector
+            .skip:
+            loop .read_word_loop 
 
-            .skip_bytes:
-                in ax, dx 
-                loop .skip_bytes
+    .exit:
+    lea rax, [2*rbx] ; return value
 
-        .read:
-        mov rcx, r8 ; mul by 256, number of words
-        add r9, r8
-        rep insw ; read
-
-        shl r8, 1
-        sub rbx, r8
-
-        jnz .read_sector_loop
-
-    mov rax, r9
-    shl rax, 1 ; number of bytes read
     pop rbx
     pop rbp
     ret

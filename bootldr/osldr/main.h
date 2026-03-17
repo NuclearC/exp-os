@@ -8,6 +8,7 @@
 #define VWIDTH 80
 #define VHEIGHT 25
 #define VCOL 0x1f
+#define VCOL2 0x19
 #define VERR 0x13
 #define VBASE 0xb8000
 
