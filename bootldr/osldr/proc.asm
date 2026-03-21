@@ -15,3 +15,20 @@ global _io_read_sector
 global _io_read_bytes
 
 
+; SUBROUTINE - start the operating system kernel. Sets up the stack
+;              and jumps to the entry point.
+; Parameters -  rdi - the entry point to jump to
+;               rsi - stack top
+;               rdx - kernel params
+
+global _kernel_start
+_kernel_start:
+    mov rsp, rsi
+    mov rbp, rsi
+    
+    mov rax, rdi
+    mov rdi, rdx
+
+    jmp rax
+
+

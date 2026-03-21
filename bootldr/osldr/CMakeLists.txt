@@ -18,7 +18,7 @@ set_property(SOURCE ${C_SOURCE_FILES} PROPERTY COMPILE_OPTIONS ${C_COMPILE_FLAGS
 set_property(SOURCE ${ASM_SOURCE_FILES} PROPERTY COMPILE_OPTIONS "-f elf64")
 
 target_link_options(osldr PRIVATE ${C_COMPILE_FLAGS} -T${LINKER_SCRIPT})
-target_include_directories(osldr PRIVATE ${SOURCE_DIR} ${PROJECT_SOURCE_DIR}/bootldr)
+target_include_directories(osldr PRIVATE ${SOURCE_DIR} ${PROJECT_SOURCE_DIR}/bootldr ${PROJECT_SOURCE_DIR})
 
 set_target_properties(osldr PROPERTIES
   LINK_DEPENDS "${LINKER_SCRIPT}"

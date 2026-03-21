@@ -4,27 +4,27 @@ OUTPUT_ARCH(i386:x86-64)
 ENTRY(KeMain)
 
 KERNEL_P_BASE = 0x100000;
-KERNEL_V_BASE = 0xffffffffc0000000;
+MAX_PAGE_SZ = 4K;
 
 SECTIONS
 {
-    . = KERNEL_V_BASE + SIZEOF_HEADERS; /* load kernel at 1mb */
+    . = KERNEL_P_BASE + SIZEOF_HEADERS; /* load kernel at 1mb */
     _kernel_start = .;
-     .text ALIGN(4K) : AT(ADDR(.text) - KERNEL_V_BASE + KERNEL_P_BASE) 
+    .text ALIGN(MAX_PAGE_SZ) :
     {
         *(.text)
     }
 
-    .rodata ALIGN(4K) : 
+    .rodata ALIGN(MAX_PAGE_SZ) : 
     {
         *(.rodata)
     }
 
-    .data ALIGN(4K) : 
+    .data ALIGN(MAX_PAGE_SZ) : 
     {
         *(.data)
     }
-    
+
     _kernel_end = .;
 }
 

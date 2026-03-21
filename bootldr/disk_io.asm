@@ -118,6 +118,8 @@ _io_read_bytes:
     add rcx, 511
     shr rcx, 9 ; ceil divide by 512
 
+    mov r10, rcx ; number of sectors 
+
     mov rbx, rsi
     call _io_read_init
     
@@ -129,9 +131,7 @@ _io_read_bytes:
         mov rdx, ATA1 + ATA_STAT
         .busy_check:
             in al, dx
-            test al, 0x80 ; BSY
-            ; jnz .busy_check
-            test al, 0x08 
+            test al, 0x08 ; data available 
             jz .busy_check
        
         mov rdx, ATA1 + ATA_DATA
@@ -148,11 +148,13 @@ _io_read_bytes:
             loop .read_word_loop
 
             .read:
-            mov [rdi + 2* rbx], ax ; write to mem location
+            mov [rdi + 2*rbx], ax ; write to mem location
             inc rbx ; read bytes += 2
 
             .skip:
             loop .read_word_loop 
+        dec r10
+        ja .read_sector_loop
 
     .exit:
     lea rax, [2*rbx] ; return value

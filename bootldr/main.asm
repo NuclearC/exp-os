@@ -106,10 +106,9 @@ enter_protected_mode:
     mov edx, edi
     mov cr3, edx ; the fucking PML4 paging shit (we donnt care about PML5 yet)
 
-    mov ecx, 0xc0000080 
+    mov ecx, 0xc0000080 ; EFER register 
     rdmsr
-
-    or eax, 0x100
+    or eax, 0x101 ; Long mode enable and SYSCALL/SYSRET support
     wrmsr
 
     mov ebx, cr0
