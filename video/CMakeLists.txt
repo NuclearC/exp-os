@@ -15,14 +15,14 @@ set_property(SOURCE ${ASM_SOURCE_FILES} PROPERTY COMPILE_OPTIONS "-f elf64")
 
 set(SOURCE_FILES ${ASM_SOURCE_FILES} ${C_SOURCE_FILES})
 
-add_executable(shell ${SOURCE_FILES})
+add_executable(mod_video ${SOURCE_FILES})
 
-target_link_options(shell PRIVATE ${C_COMPILE_FLAGS} -T${LINKER_SCRIPT})
-target_include_directories(shell PRIVATE ${SOURCE_DIR} ${PROJECT_SOURCE_DIR}/ ${PROJECT_SOURCE_DIR}/util/)
+target_link_options(mod_video PRIVATE ${C_COMPILE_FLAGS} -T${LINKER_SCRIPT})
+target_include_directories(mod_video PRIVATE ${SOURCE_DIR} ${PROJECT_SOURCE_DIR}/ ${PROJECT_SOURCE_DIR}/util/)
 
-set_target_properties(shell PROPERTIES
+set_target_properties(mod_video PROPERTIES
   LINK_DEPENDS "${LINKER_SCRIPT}"
 )
 
-set_property(GLOBAL APPEND PROPERTY IMAGE_FILES $<TARGET_FILE:shell>)
+set_property(GLOBAL APPEND PROPERTY IMAGE_FILES $<TARGET_FILE:mod_video>)
 

@@ -32,6 +32,11 @@ typedef struct KPACK {
 typedef struct KPACK {
     uint64_t r15, r14, r13, r12, r11, r10, r9, r8;
     uint64_t rdi, rsi, rbp, rbx, rdx, rcx, rax;
+} InterruptFrame;
+
+typedef struct KPACK {
+    uint64_t r15, r14, r13, r12, r11, r10, r9, r8;
+    uint64_t rdi, rsi, rbp, rbx, rdx, rcx, rax;
     uint64_t vector, error_code;
     uint64_t rip, cs, rflags, rsp, ss;
 } ExceptionFrame;
@@ -77,11 +82,11 @@ typedef struct KPACK {
 
 #define MAX_INTERRUPTS 256
 
-void KPRIV SetupInterruptDescriptor(InterruptDescriptorTable *table,
-                                    uint16_t index, uintptr_t routine,
-                                    uint16_t selector, uint8_t ist,
-                                    uint8_t gate_type, uint8_t dpl);
+void KAPI SetupInterruptDescriptor(InterruptDescriptorTable *table,
+                                   uint16_t index, uintptr_t routine,
+                                   uint16_t selector, uint8_t ist,
+                                   uint8_t gate_type, uint8_t dpl);
 
-void KPRIV InitializeInterrupts(void);
+void KAPI InitializeInterrupts(void);
 
 #endif

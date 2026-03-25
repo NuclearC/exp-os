@@ -27,6 +27,8 @@
 #define PAGE_READWRITE 0x1
 #define PAGE_ACCESSALL 0x2
 #define PAGE_EXECUTE 0x4
+#define PAGE_WRITETHROUGH 0x8
+#define PAGE_NOCACHE 0x10
 
 typedef union {
     struct KPACK {
@@ -102,10 +104,25 @@ typedef union {
 } PageTableEntry64;
 
 typedef PageMapLevel4Entry PageTopEntry;
+typedef uint64_t PageAnyEntry;
 
+/* exported functions */
+#define ALLOC_ERR_RESTRICTED_PAGE_ADDRESS 1
+#define ALLOC_ERR_MEMORY_OVERFLOW 2
+int KEXP KeAllocateMemory(uintptr_t physical_address, size_t length,
+                          uintptr_t page_address, int page_flags);
+int KEXP KeDeallocateMemory(uintptr_t page_address, size_t length);
+
+/* private functions */
 int KAPI InitializePaging(void);
+
+int KAPI SetupKernelPaging(PageTopEntry *top);
+
+void KAPI InvalidatePage(uintptr_t page_address);
 
 int KAPI AllocatePages(PageTopEntry *top, uintptr_t physical_address,
                        size_t length, uintptr_t page_address, int page_flags);
-
+void KAPI FreePages(PageTopEntry *top, uintptr_t page_address, size_t length);
+void KAPI DeallocatePages(PageTopEntry *top, uintptr_t page_address,
+                          size_t length);
 #endif

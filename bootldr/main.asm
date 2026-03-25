@@ -25,6 +25,9 @@ section .text
 
 ; the entry point
 start:
+    ; load VGA video modes
+
+
     ; load the memory map
     xor ebx, ebx
     mov es, bx ; for loading the memory map

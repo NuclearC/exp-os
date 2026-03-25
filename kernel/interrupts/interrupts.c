@@ -16,23 +16,31 @@ extern void _isr_handle_pf(void);
 extern void _isr_handle_df(void);
 extern void _isr_handle_gpf(void);
 
+extern void _irq_handle_timer(void);
+extern void _irq_handle_keyboard(void);
+
 static InterruptDescriptor64 isr[MAX_INTERRUPTS];
 static InterruptDescriptorTable idt;
 
-void KAPI KeHandleGeneralProtectionFault(void *e) {
+void KEXP IrqHandleTimer(void) {}
+
+void KEXP IrqHandleKeyboard(uint64_t scancode) {
+    Print("keypress %d\n", scancode);
+}
+
+void KEXP IsrHandleGeneralProtectionFault(void *e) {
     Print("general protection fault %x \n", e);
     while (1)
         ;
 }
 
-void KAPI KeHandleDoubleFault(void *e) {
+void KEXP IsrHandleDoubleFault(void *e) {
     Print("double fault %x \n", e);
     while (1)
         ;
 }
-void KAPI KeHandlePageFault(PageFaultException *e) {
+void KEXP IsrHandlePageFault(PageFaultException *e) {
     Print("Page fault %x %d \n", e->address, e->frame.error_code);
-
     if (e->frame.error_code & 1)
         Print("page protection error \n");
     else
@@ -58,7 +66,7 @@ void KAPI KeHandlePageFault(PageFaultException *e) {
 }
 
 static void SetupInterruptTable(void) {
-    ZeroMemory(isr, sizeof(isr));
+    KeZeroMemory(isr, sizeof(isr));
 
     SetupInterruptDescriptor(&idt, ISR_DE, (uintptr_t)_isr_handle_de,
                              SEG_KERNEL_CS, 0, GATE_TYPE_INT, INT_DPL_0);
@@ -69,9 +77,15 @@ static void SetupInterruptTable(void) {
                              SEG_KERNEL_CS, 0, GATE_TYPE_INT, INT_DPL_0);
     SetupInterruptDescriptor(&idt, ISR_GP, (uintptr_t)_isr_handle_gpf,
                              SEG_KERNEL_CS, 0, GATE_TYPE_INT, INT_DPL_0);
-}
 
-void KPRIV InitializeInterrupts(void) {
+    SetupInterruptDescriptor(&idt, ISR_PIC_BASE + 0,
+                             (uintptr_t)_irq_handle_timer, SEG_KERNEL_CS, 0,
+                             GATE_TYPE_INT, INT_DPL_0);
+    SetupInterruptDescriptor(&idt, ISR_PIC_BASE + 1,
+                             (uintptr_t)_irq_handle_keyboard, SEG_KERNEL_CS, 0,
+                             GATE_TYPE_INT, INT_DPL_0);
+}
+void KAPI InitializeInterrupts(void) {
 
     idt.descriptors = isr;
     idt.sz = sizeof(isr) - 1;
@@ -81,16 +95,16 @@ void KPRIV InitializeInterrupts(void) {
     _idt_setup(&idt);
     _pic_setup();
 
-    /* enable keyboard interrupt */
-    _pic_setmask(0xffff);
+    /* enable keyboard and timer interrupts */
+    _pic_setmask(0xffff & ~(3));
 
     _idt_enable();
 }
 
-void KPRIV SetupInterruptDescriptor(InterruptDescriptorTable *table,
-                                    uint16_t index, uintptr_t routine,
-                                    uint16_t selector, uint8_t ist,
-                                    uint8_t gate_type, uint8_t dpl) {
+void KAPI SetupInterruptDescriptor(InterruptDescriptorTable *table,
+                                   uint16_t index, uintptr_t routine,
+                                   uint16_t selector, uint8_t ist,
+                                   uint8_t gate_type, uint8_t dpl) {
     InterruptDescriptor64 *id = &table->descriptors[index & 0xff];
     id->offset_1 = routine & 0xffff;
     id->offset_2 = (routine >> 16) & 0xffff;

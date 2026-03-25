@@ -1,5 +1,5 @@
 
-bits 32
+bits 64 
 
 global _test
 
@@ -7,16 +7,20 @@ global _test
 section .text
 
 _test:
-    mov eax, 1
-    mov ebx, test
-    mov edx, 0x05
-    int 80h
+    push rbp
+    mov rbp, rsp
+    
+    mov rax, 1
+    mov rdi, 0
+    mov rsi, test
+    mov rdx, test_end - test
+    syscall
 
-    xor eax, eax
+    pop rbp
     ret
 
 section .data
     
 test: db "hello from userspace", 10, 0
-
+test_end:
 

@@ -10,10 +10,11 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/mbr)
 add_subdirectory(${PROJECT_SOURCE_DIR}/bootldr)
 add_subdirectory(${PROJECT_SOURCE_DIR}/bootldr/osldr)
 add_subdirectory(${PROJECT_SOURCE_DIR}/kernel)
-# add_subdirectory(${PROJECT_SOURCE_DIR}/shell)
+add_subdirectory(${PROJECT_SOURCE_DIR}/shell)
+add_subdirectory(${PROJECT_SOURCE_DIR}/video)
 
 get_property(DRV_ARGS GLOBAL PROPERTY IMAGE_FILES)
 
 add_custom_target(bootimage ALL COMMAND python ${PROJECT_SOURCE_DIR}/drv/main.py ${DRV_ARGS} -o ${PROJECT_BUILD_DIR}bootimage)
-add_dependencies(bootimage mbr bootldr osldr)
+add_dependencies(bootimage mbr bootldr osldr kernel shell)
 

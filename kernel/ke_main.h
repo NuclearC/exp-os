@@ -2,9 +2,9 @@
 #ifndef NC_KE_MAIN_H_
 #define NC_KE_MAIN_H_
 
-#define KEXP  /* public, exported kernel function */
-#define KAPI  /* kernel API function */
-#define KPRIV /* private kernel function */
+#define KAPI /* kernel API function */
+#define KEXP                                                                   \
+    __attribute__((visibility("default"))) /* kernel Exported API function */
 #define KPACK __attribute__((packed))
 #define KALIGN(x) __attribute__((aligned(x)))
 #define KNORET __attribute__((noreturn))

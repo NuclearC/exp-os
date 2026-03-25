@@ -56,8 +56,8 @@ _isr_handle_df:
     isr_push_ctx
     mov rdi, rsp
 
-    extern KeHandleDoubleFault
-    call KeHandleDoubleFault
+    extern IsrHandleDoubleFault
+    call IsrHandleDoubleFault
 
     isr_pop_ctx
     add rsp, 8 ; pop error code
@@ -73,8 +73,8 @@ _isr_handle_pf:
 
     mov rdi, rsp
 
-    extern KeHandlePageFault
-    call KeHandlePageFault
+    extern IsrHandlePageFault
+    call IsrHandlePageFault
 
     isr_pop_ctx
     add rsp, 8 ; pop error code
@@ -87,9 +87,12 @@ _isr_handle_gpf:
 
     mov rdi, rsp
 
-    extern KeHandleGeneralProtectionFault
-    call KeHandleGeneralProtectionFault
+    extern IsrHandleGeneralProtectionFault
+    call IsrHandleGeneralProtectionFault
 
     isr_pop_ctx
     add rsp, 8 ; pop error code
     iretq
+
+
+

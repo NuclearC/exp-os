@@ -5,42 +5,45 @@
 #include "memory/memory.h"
 #include "memory/paging.h"
 #include "memory/segment.h"
+
+#include "modules/filesystem/filesystem.h"
+#include "modules/qvbe/bochs_vbe.h"
+#include "pci/pci_setup.h"
+
 #include "params.h"
 #include "sys/syscall.h"
+#include "tasks/task.h"
+#include "user/exec.h"
 
 /* The main entry point of the kernel.
  *
  */
-int KAPI KeMain(KernelParameters const *params) {
+int KEXP KeMain(KernelParameters const *params) {
     /* Initialize everything */
 
     InitializeDiagnostics();
     Print("kernel init\n");
 
+    /* initialize interrupts first */
     InitializeInterrupts();
 
+    /* initialize memory */
     InitializeSegments();
     InitializeMemory(params->memory_map);
     InitializePaging();
     InitializeSyscalls();
+    InitializeTasks();
 
-    void *a = AllocatePhysicalMemory(10, MEM_ALIGN);
-    void *b = AllocatePhysicalMemory(10, MEM_ALIGN);
-    void *c = AllocatePhysicalMemory(100, 0x100);
+    EnumeratePciDevices();
 
-    PrintMemoryBlocks();
+    int num_files = LoadFiles();
+    Print("loaded %d files from disk\n", num_files);
 
-    DeallocatePhysicalMemory(b);
+    if (KSUCCESS != InitializeVbe()) {
+        Print("failed to initialize video\n");
+    }
 
-    PrintMemoryBlocks();
-    DeallocatePhysicalMemory(c);
-
-    PrintMemoryBlocks();
-    DeallocatePhysicalMemory(a);
-    PrintMemoryBlocks();
-
-    const char *s = (const char *)KERNEL_VBASE;
-    Print("vbase %s \n", s);
+    UserExecuteFile("mod_video");
 
     while (1)
         ;

@@ -16,14 +16,14 @@ static PhysicalMemoryBlock blocks[MAX_MEMORY_BLOCKS];
 static int avl_block_count;
 static int block_count;
 
-void KPRIV PrintMemoryBlocks(void) {
+void KAPI PrintMemoryBlocks(void) {
     for (int i = 0; i < block_count; i++) {
         Print("memory block %x:%x \n", blocks[i].begin, blocks[i].end);
     }
 }
 
-void KPRIV MemoryCopy(void *restrict dest, const void *restrict src,
-                      size_t nbytes) {
+void KEXP KeMemoryCopy(void *restrict dest, const void *restrict src,
+                       size_t nbytes) {
     const size_t nqwords = nbytes / 8;
     for (size_t i = 0; i < nqwords; ++i) {
         *((uint64_t *)dest + i) = *((uint64_t *)src + i);
@@ -34,7 +34,7 @@ void KPRIV MemoryCopy(void *restrict dest, const void *restrict src,
     }
 }
 
-void KPRIV SetMemory(void *dest, size_t nbytes, uint64_t set) {
+void KEXP KeSetMemory(void *dest, size_t nbytes, uint64_t set) {
     const size_t nqwords = nbytes / 8;
     for (size_t i = 0; i < nqwords; ++i) {
         *((uint64_t *)dest + i) = set;
@@ -44,10 +44,12 @@ void KPRIV SetMemory(void *dest, size_t nbytes, uint64_t set) {
     }
 }
 
-void KPRIV ZeroMemory(void *dest, size_t nbytes) { SetMemory(dest, nbytes, 0); }
+void KEXP KeZeroMemory(void *dest, size_t nbytes) {
+    KeSetMemory(dest, nbytes, 0);
+}
 
-int KPRIV MemoryCompare(const void *source1, const void *source2,
-                        size_t nbytes) {
+int KEXP KeMemoryCompare(const void *source1, const void *source2,
+                         size_t nbytes) {
     const size_t nqwords = nbytes / 8;
     for (size_t i = 0; i < nqwords; ++i) {
         if (*((uint64_t *)source1 + i) != *((uint64_t *)source2 + i)) {
@@ -63,9 +65,9 @@ int KPRIV MemoryCompare(const void *source1, const void *source2,
     return 0;
 }
 
-void KPRIV InitializeMemory(PhysicalMemoryMap const *memory_map) {
-    ZeroMemory(blocks, sizeof(blocks));
-    ZeroMemory(avl_blocks, sizeof(avl_blocks));
+void KAPI InitializeMemory(PhysicalMemoryMap const *memory_map) {
+    KeZeroMemory(blocks, sizeof(blocks));
+    KeZeroMemory(avl_blocks, sizeof(avl_blocks));
 
     block_count = 0;
     avl_block_count = 0;
@@ -85,14 +87,14 @@ void KPRIV InitializeMemory(PhysicalMemoryMap const *memory_map) {
     }
 }
 
-int KPRIV TryReallocatePhysicalMemory(const void *old_memory,
-                                      size_t new_length) {
+int KAPI TryReallocatePhysicalMemory(const void *old_memory,
+                                     size_t new_length) {
     DeallocatePhysicalMemory(old_memory);
     AllocatePhysicalMemory(new_length, MEM_ALIGN);
     return 0;
 }
 
-int KPRIV DeallocatePhysicalMemory(const void *addr) {
+int KAPI DeallocatePhysicalMemory(const void *addr) {
     for (int i = 0; i < block_count; i++) {
         if (blocks[i].begin == (uintptr_t)addr) {
             if (i == block_count - 1) {
@@ -114,7 +116,8 @@ int KPRIV DeallocatePhysicalMemory(const void *addr) {
     return MM_ERR_DEALLOC_INVLD;
 }
 
-void *KPRIV AllocatePhysicalMemory(size_t length, size_t align) {
+void *KAPI AllocatePhysicalMemory(size_t length, size_t align) {
+    Print("allocating %x bytes with align %x \n", length, align);
     if (block_count >= MAX_MEMORY_BLOCKS)
         return MM_ERR_ALLOC_FAILED;
     /* walk through memory to find an available block */

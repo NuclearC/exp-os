@@ -3,6 +3,14 @@ bits 64
 
 section .text
 
+global _pg_exec_check
+_pg_exec_check:
+    mov rcx, 0xC0000080 ; EFER
+    rdmsr
+    or rax, (1 << 11) 
+    wrmsr
+    ret
+
 ; SUBROUTINE - load Page tables 
 ; Parameters -  rdi - the page tables pointer
 global _pg_load

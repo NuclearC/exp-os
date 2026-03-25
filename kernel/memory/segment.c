@@ -11,7 +11,7 @@ static GlobalDescriptorTable gdt;
 static TaskStateSegment64 tss;
 
 static void InitializeTSS(void) {
-    ZeroMemory(&tss, sizeof(tss));
+    KeZeroMemory(&tss, sizeof(tss));
 
     tss.rsp0 = KERNEL_STACK_TOP + 0x10000;
     tss.iomap_base = 0xffff;
@@ -33,7 +33,7 @@ static void InitializeTSS(void) {
 }
 
 void KAPI InitializeSegments(void) {
-    ZeroMemory(descriptors, sizeof(descriptors));
+    KeZeroMemory(descriptors, sizeof(descriptors));
 
     /* Kernel CS */
     descriptors[1].limit_low = 0xffff;
