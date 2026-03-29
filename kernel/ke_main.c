@@ -10,10 +10,10 @@
 #include "modules/qvbe/bochs_vbe.h"
 #include "pci/pci_setup.h"
 
+#include "exec/exec.h"
 #include "params.h"
 #include "sys/syscall.h"
 #include "tasks/task.h"
-#include "user/exec.h"
 
 /* The main entry point of the kernel.
  *
@@ -42,8 +42,6 @@ int KEXP KeMain(KernelParameters const *params) {
     if (KSUCCESS != InitializeVbe()) {
         Print("failed to initialize video\n");
     }
-
-    UserExecuteFile("mod_video");
 
     while (1)
         ;
