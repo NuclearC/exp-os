@@ -3,7 +3,7 @@
 CC := gcc
 ASM := nasm
 
-CC_FLAGS := -c -Wall -Wextra -Werror -ffreestanding -nostdlib -fno-builtin -fno-stack-protector -fno-pie -mno-red-zone -MMD -MP -I.
+CC_FLAGS := -c -Wall -Wextra -Werror -ffreestanding -nostdlib -fno-builtin -fno-stack-protector -fno-pie -mno-red-zone -I.
 ASM_FLAGS := -f bin  
 ASM_CFLAGS := -f elf64
 
@@ -11,6 +11,7 @@ LINK := ld
 
 OUT_DIR := build/
 OBJ_DIR := build/obj/
+OUT_IMAGE := $(OUT_DIR)out_image
 
 # first stage bootloader
 MBR_SRCS := mbr/boot.asm
@@ -46,18 +47,17 @@ KERNEL_OBJ_DIR := $(OBJ_DIR)kernel
 KERNEL_OUT_FILE := $(OUT_DIR)kernel
 
 # targets
-all: $(OUT_DIR)out_image
+all: $(OUT_IMAGE) 
 
-$(OUT_DIR)out_image: $(MBR_OUT_FILE) $(BOOTLDR_OUT_FILE) $(OSLDR_OUT_FILE) $(KERNEL_OUT_FILE)
-	python drv/main.py -f $(MBR_OUT_FILE) -s $(BOOTLDR_OUT_FILE) $(OSLDR_OUT_FILE) $(KERNEL_OUT_FILE) -o $(OUT_DIR)out_image 
+$(OUT_IMAGE): $(MBR_OUT_FILE) $(BOOTLDR_OUT_FILE) $(OSLDR_OUT_FILE) $(KERNEL_OUT_FILE)
+	python drv/main.py -f $(MBR_OUT_FILE) -s $(BOOTLDR_OUT_FILE) $(OSLDR_OUT_FILE) $(KERNEL_OUT_FILE) -o $@
 
 $(MBR_OUT_FILE): $(MBR_SRCS)
 	$(ASM) $(ASM_FLAGS) $< -o $(MBR_OUT_FILE) 
 
 $(BOOTLDR_OUT_FILE): $(BOOTLDR_SRCS)
-	$(ASM) $(ASM_FLAGS) -I ./bootldr/ $< -o $(BOOTLDR_OUT_FILE)
+	$(ASM) $(ASM_FLAGS) -I ./bootldr/ $< -o $@
 
-$(info $(OSLDR_OBJ_DIR))
 $(OSLDR_OBJ_DIR)/%.o: $(OSLDR_SRC_DIR)/%.c
 	mkdir -p $(dir $@)
 	$(CC) $(CC_FLAGS) -I./bootldr/osrldr/ $< -o $@
@@ -78,5 +78,12 @@ $(KERNEL_OBJ_DIR)/%.o: $(KERNEL_SRC_DIR)/%.asm
 
 $(KERNEL_OUT_FILE): $(KERNEL_C_OBJS) $(KERNEL_ASM_OBJS)
 	$(LINK) -T$(KERNEL_LINKER_FILE) -o $@ $^
+
+clean:
+	rm $(OUT_IMAGE)
+	rm $(MBR_OUT_FILE)
+	rm $(BOOTLDR_OUT_FILE)
+	rm $(OSLDR_C_OBJS) $(OSLDR_ASM_OBJS) $(OSLDR_OUT_FILE)
+	rm $(KERNEL_C_OBJS) $(KERNEL_ASM_OBJS) $(KERNEL_OUT_FILE)
 
 
