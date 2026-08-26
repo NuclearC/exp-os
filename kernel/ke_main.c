@@ -44,14 +44,9 @@ int KEXP KeMain(KernelParameters const *params) {
         ;
 
     VgaInitialize();
-    VgaTextWriteString("hello from ", 11, 0x0f);
-    VgaTextWriteString("kernel \n", 8, 0x0e);
-    VgaTextWriteString("test \n", 6, 0x0d);
+    VgaTextWriteString("Kernel initialized...\n", 22, 0x0f);
 
     while (1) {
-        for (int i = 0; i < 2e8; i++)
-            ;
-        VgaTextWriteString("work \n", 6, 0x07);
     }
 
     return 0;

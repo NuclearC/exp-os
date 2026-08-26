@@ -2,6 +2,20 @@
 bits 64
 section .text
 
+VGA_MISC_WRITE      equ 0x3C2
+VGA_MISC_READ       equ 0x3CC
+VGA_SEQ_INDEX       equ 0x3C4
+VGA_SEQ_DATA        equ 0x3C5
+VGA_CRTC_INDEX      equ 0x3D4   ; (or 0x3B4 if mono)
+VGA_CRTC_DATA       equ 0x3D5
+VGA_GC_INDEX        equ 0x3CE
+VGA_GC_DATA         equ 0x3CF
+VGA_AC_INDEX        equ 0x3C0   ; write index+data, read index
+VGA_AC_READ         equ 0x3C1
+VGA_INSTAT_READ     equ 0x3DA   ; reading this resets AC flip-flop
+VGA_DAC_WRITE_INDEX equ 0x3C8
+VGA_DAC_DATA        equ 0x3C9
+
 ; SUBROUTINE - enable vga cursor
 ; Parameters -  rdi - cursor_start
 ;               rsi - cursor_end
